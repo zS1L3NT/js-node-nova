@@ -1,0 +1,15 @@
+{
+	"name": "nova",
+	"version": "1.0.0",
+	"description": "Nova CLI",
+	"main": "app.js",
+	"author": "zS1L3NT",
+	"scripts": {
+		"start": "node app.js"
+	},
+	"dependencies": {},
+	"engines": {
+		"node": ">=0.12"
+	},
+	"engineStrict": true
+}

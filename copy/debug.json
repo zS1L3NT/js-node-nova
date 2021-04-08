@@ -1,0 +1,11 @@
+{
+    "type": "node",
+    "request": "launch",
+    "name": "*****",
+    "program": "${workspaceFolder}/*****",
+    "sourceMaps": true,
+    "trace": "all",
+    "skipFiles": ["<node_internals>/**"],
+    "runtimeExecutable": "node",
+    "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"]
+}

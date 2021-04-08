@@ -1,0 +1,7 @@
+/node_modules
+/build
+nodemon.json
+.prettierrc
+.editorconfig
+*.js.map
+**/serviceAccountKey.json
