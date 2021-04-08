@@ -5,3 +5,4 @@ nodemon.json
 .editorconfig
 *.js.map
 **/serviceAccountKey.json
+**/token.json
