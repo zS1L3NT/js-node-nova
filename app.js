@@ -28,7 +28,6 @@ if (args[0] === "add") {
 		if (arg === "env") {
 			copy(".editorconfig")
 			copy(".prettierrc")
-			copy(".gitignore")
 			continue
 		}
 		if (arg === "pkg") {
