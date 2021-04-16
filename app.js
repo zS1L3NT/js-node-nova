@@ -28,6 +28,7 @@ if (args[0] === "add") {
 		if (arg === "env") {
 			copy(".editorconfig")
 			copy(".prettierrc")
+			copy("nodemon.json")
 			continue
 		}
 		if (arg === "pkg") {
