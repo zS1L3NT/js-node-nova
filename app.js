@@ -4,7 +4,7 @@ const path = require("path")
 
 const copy = filename => {
 	fs.copyFile(
-		path.join(__dirname, "add", filename),
+		path.join(__dirname, "add", filename + ".bkp"),
 		filename,
 		() => console.log(`Wrote to ${filename}`)
 	)
