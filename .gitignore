@@ -1,4 +1,9 @@
 /node_modules
 /build
+nodemon.json
 *.js.map
+*.test.*
 **/serviceAccountKey.json
+**/*Token.json
+**/token.json
+.rest
