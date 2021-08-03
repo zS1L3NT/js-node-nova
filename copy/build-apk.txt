@@ -1,0 +1,1 @@
+tsc && cd build && ncc build app.js && cd dist && pkg index.js -t host && move index.exe ../../package.exe && cd ../.. && rmdir /s/q build

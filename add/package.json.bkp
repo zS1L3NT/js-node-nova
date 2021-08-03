@@ -1,17 +1,12 @@
 {
-	"name": "*****",
+	"name": "",
 	"version": "1.0.0",
-	"description": "*****",
+	"description": "",
 	"main": "build/app.js",
 	"author": "zS1L3NT",
 	"scripts": {
 		"start": "node build/app.js",
-		"dev": "ts-node src/app.ts",
-		"build": "tsc && cd build && ncc build app.js && cd dist && pkg index.js -t host && move index.exe ../../package.exe && cd ../.. && rmdir /s/q build"
+		"dev": "ts-node src/app.ts"
 	},
-	"dependencies": {},
-	"engines": {
-		"node": ">=0.12"
-	},
-	"engineStrict": true
+	"dependencies": {}
 }

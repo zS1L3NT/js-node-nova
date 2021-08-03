@@ -2,11 +2,20 @@ const args = process.argv.slice(2)
 const fs = require("fs")
 const path = require("path")
 
-const copy = filename => {
+const add = filename => {
 	fs.copyFile(
 		path.join(__dirname, "add", filename + ".bkp"),
 		filename,
 		() => console.log(`Wrote to ${filename}`)
+	)
+}
+
+const copy = filename => {
+	console.log(
+		fs.readFileSync(
+			path.join(__dirname, "copy", filename),
+			'utf-8'
+		)
 	)
 }
 
@@ -17,25 +26,24 @@ if (args[0] === "add") {
 	}
 	for (let i = 1, il = args.length; i < il; i++) {
 		const arg = args[i]
-		if (arg === "ts") {
-			copy("tsconfig.json")
-			continue
+		switch (arg) {
+			case "ts":
+				add("tsconfig.json")
+				break
+			case "git":
+				add(".gitconfig")
+				break
+			case "env":
+				add(".editorconfig")
+				add(".prettierrc")
+				add("nodemon.json")
+				break
+			case "pkg":
+				add("package.json")
+				break
+			default:
+				console.log(`No such add shortcut: (${arg})`)
 		}
-		if (arg === "git") {
-			copy(".gitignore")
-			continue
-		}
-		if (arg === "env") {
-			copy(".editorconfig")
-			copy(".prettierrc")
-			copy("nodemon.json")
-			continue
-		}
-		if (arg === "pkg") {
-			copy("package.json")
-			continue
-		}
-		console.log(`No such shortcut: (${arg})`)
 	}
 } else if (args[0] === "copy") {
 	if (args.length === 1) {
@@ -43,9 +51,18 @@ if (args[0] === "add") {
 	}
 	for (let i = 1, il = args.length; i < il; i++) {
 		const arg = args[i]
-		if (arg === "debug") {
-			const data = fs.readFileSync(path.join(__dirname, "copy", "debug.json"), 'utf-8')
-			console.log(data)
+		switch (arg) {
+			case "debug":
+				copy("debug.json")
+				break
+			case "app":
+				copy("app.js")
+				break
+			case "build-apk":
+				copy("build-apk.txt")
+				break
+			default:
+				console.log(`No such copy shortcut: (${arg})`)
 		}
 	}
 } else {
