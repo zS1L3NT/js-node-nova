@@ -31,7 +31,7 @@ if (args[0] === "add") {
 				add("tsconfig.json")
 				break
 			case "git":
-				add(".gitconfig")
+				add(".gitignore")
 				break
 			case "env":
 				add(".editorconfig")
