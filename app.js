@@ -41,6 +41,9 @@ if (args[0] === "add") {
 			case "pkg":
 				add("package.json")
 				break
+			case "esl":
+				add(".eslintrc.json")
+				break
 			default:
 				console.log(`No such add shortcut: (${arg})`)
 		}

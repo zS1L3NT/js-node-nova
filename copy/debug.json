@@ -1,11 +1,10 @@
 {
     "type": "node",
     "request": "launch",
-    "name": "*****",
-    "program": "${workspaceFolder}/*****",
+    "name": "app.ts",
+    "program": "${workspaceFolder}/src/app.ts",
     "sourceMaps": true,
-    "trace": "all",
     "skipFiles": ["<node_internals>/**"],
     "runtimeExecutable": "node",
-    "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"]
+    "runtimeArgs": ["--require", "ts-node/register/files"]
 }
