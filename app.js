@@ -61,8 +61,8 @@ if (args[0] === "add") {
 			case "app":
 				copy("app.js")
 				break
-			case "build-apk":
-				copy("build-apk.txt")
+			case "build-exe":
+				copy("build-exe.txt")
 				break
 			default:
 				console.log(`No such copy shortcut: (${arg})`)
