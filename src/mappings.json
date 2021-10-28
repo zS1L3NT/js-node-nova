@@ -8,5 +8,6 @@
 	},
 	"copy": {
 		"debugger": ["debug.json"]
-	}
+	},
+	"apply-discord-template": {}
 }
