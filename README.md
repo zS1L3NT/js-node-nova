@@ -1,1 +1,0 @@
-A simple CLI I made to copy project configuration files to new projects

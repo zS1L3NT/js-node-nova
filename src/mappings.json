@@ -1,0 +1,12 @@
+{
+	"add": {
+		"ts": ["tsconfig.json"],
+		"esl": [".eslintrc.json"],
+		"pkg": ["package.json"],
+		"git": [".gitignore"],
+		"env": [".editorconfig", ".prettierrc", "nodemon.json"]
+	},
+	"copy": {
+		"debugger": ["debug.json"]
+	}
+}
