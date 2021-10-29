@@ -55,7 +55,7 @@ if (args[0] in mappings) {
 				if (fs.statSync(entity_path).isDirectory()) {
 					apply_folder(entity_path)
 				} else {
-					fs.copyFileSync(entity_path, entity_path.replace(template_path, process.cwd()))
+					fs.writeFileSync(entity_path, fs.readFileSync(entity_path.replace(template_path, process.cwd())))
 				}
 			}
 		}
