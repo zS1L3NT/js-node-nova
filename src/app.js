@@ -21,7 +21,7 @@ if (args[0] in mappings) {
 		for (let i = 1, il = args.length; i < il; i++) {
 			if (args[i] in mappings.add) {
 				mappings.add[args[i]].forEach(file => {
-					fs.copyFile(path.join(__dirname, "add", file + ".bkp"), file, () => console.log(`Wrote to ${file}`))
+					fs.copyFile(path.join(__dirname, "../add", file + ".bkp"), file, () => console.log(`Wrote to ${file}`))
 				})
 			}
 		}
@@ -36,7 +36,7 @@ if (args[0] in mappings) {
 		for (let i = 1, il = args.length; i < il; i++) {
 			if (args[i] in mappings.copy) {
 				mappings.copy[args[i]].forEach(file => {
-					console.log(fs.readFileSync(path.join(__dirname, "copy", file), "utf-8"))
+					console.log(fs.readFileSync(path.join(__dirname, "../copy", file), "utf-8"))
 				})
 			}
 		}
