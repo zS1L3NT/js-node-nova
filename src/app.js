@@ -31,12 +31,13 @@ if (args[0] in mappings) {
 		if (args.length === 1) {
 			console.log("No files arguements passed")
 			console.log(`Existing operations: ${Object.keys(mappings.copy).join(", ")}`)
+			process.exit()
 		}
 
 		for (let i = 1, il = args.length; i < il; i++) {
 			if (args[i] in mappings.copy) {
 				mappings.copy[args[i]].forEach(file => {
-					console.log(fs.readFileSync(path.join(__dirname, "../copy", file), "utf-8"))
+					console.log(fs.readFileSync(path.join(__dirname, "../copy", file + ".bkp"), "utf-8"))
 				})
 			}
 		}
