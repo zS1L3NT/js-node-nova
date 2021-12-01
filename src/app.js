@@ -42,27 +42,6 @@ if (args[0] in mappings) {
 			}
 		}
 	}
-
-	if (args[0] === "apply-discord-template") {
-		const template_path = path.join(__dirname, "../../ts-discord-template")
-		const apply_folder = origin_path => {
-			const destination_path = origin_path.replace(template_path, process.cwd())
-			if (!fs.existsSync(destination_path)) {
-				fs.mkdirSync(destination_path)
-			}
-
-			for (const entity_name of fs.readdirSync(origin_path)) {
-				const entity_path = path.join(origin_path, entity_name)
-				if (fs.statSync(entity_path).isDirectory()) {
-					apply_folder(entity_path)
-				} else {
-					fs.writeFileSync(entity_path.replace(template_path, process.cwd()), fs.readFileSync(entity_path))
-				}
-			}
-		}
-
-		apply_folder(path.join(template_path, "src"))
-	}
 } else {
 	console.log(`No such operation  : ${args[0]}`)
 	console.log(`Existing operations: ${Object.keys(mappings).join(", ")}`)
