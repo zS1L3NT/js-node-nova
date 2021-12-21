@@ -4,7 +4,7 @@
 		"esl": [".eslintrc.json"],
 		"pkg": ["package.json"],
 		"git": [".gitignore"],
-		"env": [".editorconfig", ".prettierrc", "nodemon.json"]
+		"env": [".editorconfig", ".prettierrc"]
 	},
 	"copy": {
 		"debugger": ["debug.json"]
