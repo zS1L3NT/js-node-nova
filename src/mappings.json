@@ -7,6 +7,6 @@
 		"env": [".editorconfig", ".prettierrc"]
 	},
 	"copy": {
-		"debugger": ["debug.json"]
+		"debugger": ["debugger.json"]
 	}
 }
