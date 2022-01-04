@@ -3,7 +3,7 @@
 		/** Transpiler */
 		"target": "esnext",
 		"lib": ["dom", "dom.iterable", "esnext"],
-		"module": "esnext", // commonjs
+		"module": "commonjs", // esnext
 		"moduleResolution": "node",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
@@ -21,7 +21,6 @@
 		"strictPropertyInitialization": true,
 		"noImplicitThis": true,
 		"useUnknownInCatchVariables": true,
-		"exactOptionalPropertyTypes": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,
