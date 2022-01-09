@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		/** Transpiler */
 		"target": "esnext",
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"lib": [], // "dom", "dom.iterable", "esnext"
 		"module": "commonjs", // esnext
 		"moduleResolution": "node",
 		"esModuleInterop": true,

@@ -1,9 +1,8 @@
 {
 	"name": "",
-	"version": "1.0.0",
 	"description": "",
 	"main": "dist/app.js",
-	"author": "zS1L3NT <zechariahtan144@gmail.com> (http://www.zectan.com)",
+	"author": "zS1L3NT <zechariahtan144@gmail.com> (https://www.zectan.com)",
 	"scripts": {
 		"start": "node dist/app.js",
 		"dev": "ts-node --files src/app.ts",
