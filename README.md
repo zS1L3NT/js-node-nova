@@ -26,3 +26,7 @@ To use Nova CLI, run this command
 ```
 $ node src/app [args]
 ```
+
+## Built with
+
+-   JavaScript
