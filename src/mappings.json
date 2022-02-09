@@ -1,7 +1,6 @@
 {
 	"add": {
 		"ts": ["tsconfig.json"],
-		"esl": [".eslintrc.json"],
 		"pkg": ["package.json"],
 		"git": [".gitignore"],
 		"env": [".editorconfig", ".prettierrc"]
