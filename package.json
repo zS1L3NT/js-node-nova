@@ -1,8 +1,0 @@
-{
-	"name": "js-node-nova",
-	"bin": "src/app.js",
-	"pkg": {
-		"targets": ["node16-win-x64"],
-		"assets": ["add/**/*", "copy/**/*"]
-	}
-}
