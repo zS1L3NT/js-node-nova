@@ -3,7 +3,8 @@
 		"ts": ["tsconfig.json"],
 		"pkg": ["package.json"],
 		"git": [".gitignore"],
-		"env": [".editorconfig", ".prettierrc"]
+		"ecf": [".editorconfig"],
+		"prc": [".prettierrc"]
 	},
 	"copy": {
 		"debugger": ["debugger.json"]
