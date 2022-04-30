@@ -66,20 +66,28 @@ if (args[0] in mappings) {
 
 			const repository = process.cwd().split("\\").at(-1)
 			const json = JSON.parse(data)
+			json.devDependencies = json.devDependencies || {}
 
-			for (const dependency in json.dependencies) {
-				console.log(
-					`\t-   [![${dependency}](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/${repository}/${dependency}?style=flat-square${
-						args[1] !== "." ? `&filename=${args[1]}/package.json` : ""
-					})](https://npmjs.com/package/${dependency})`
-				)
-			}
+			const dependencies = { ...json.dependencies, ...json.devDependencies }
+			const sortedDependencies = Object.keys(dependencies)
+				.sort()
+				.reduce((r, k) => ((r[k] = dependencies[k]), r), {})
 
-			for (const dependency in json.devDependencies || {}) {
+			for (const dependency in sortedDependencies) {
 				console.log(
-					`\t-   [![${dependency}](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/${repository}/dev/${dependency}?style=flat-square${
-						args[1] !== "." ? `&filename=${args[1]}/package.json` : ""
-					})](https://npmjs.com/package/${dependency})`
+					[
+						"\t-   [![",
+						dependency,
+						"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
+						repository,
+						dependency in json.dependencies ? "/" : "/dev/",
+						dependency,
+						"?style=flat-square",
+						args[1] !== "." ? `&filename=${args[1]}/package.json` : "",
+						")](https://npmjs.com/package/",
+						dependency,
+						")"
+					].join("")
 				)
 			}
 		})
