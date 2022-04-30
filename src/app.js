@@ -58,8 +58,16 @@ if (args[0] in mappings) {
 			try {
 				const json = JSON.parse(fs.readFileSync(arg + "/package.json", "utf-8"))
 				dependencies.push(
-					...Object.keys(json.dependencies),
-					...Object.keys(json.devDependencies || {}).map(d => "#" + d)
+					...Object.keys(json.dependencies).map(d => ({
+						name: d,
+						dev: false,
+						folder: arg
+					})),
+					...Object.keys(json.devDependencies || {}).map(d => ({
+						name: d,
+						dev: true,
+						folder: arg
+					}))
 				)
 			} catch {
 				console.error("Could not find a package.json in " + arg)
@@ -68,21 +76,21 @@ if (args[0] in mappings) {
 		}
 
 		const repository = process.cwd().split("\\").at(-1)
-		for (let dependency of dependencies.sort()) {
-			const dev = dependency.startsWith("#")
-			dependency = dependency.replace("#", "")
+		for (let { name, dev, folder } of dependencies.sort((a, b) =>
+			a.name.localeCompare(b.name)
+		)) {
 			console.log(
 				[
 					"\t-   [![",
-					dependency,
+					name,
 					"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
 					repository,
 					dev ? "/dev/" : "/",
-					dependency,
+					name,
 					"?style=flat-square",
-					args[1] !== "." ? `&filename=${args[1]}/package.json` : "",
+					folder !== "." ? `&filename=${folder}/package.json` : "",
 					")](https://npmjs.com/package/",
-					dependency,
+					name,
 					")"
 				].join("")
 			)
