@@ -53,48 +53,44 @@ if (args[0] in mappings) {
 			process.exit()
 		}
 
-		const dependencies = []
-		for (const arg of args.slice(1)) {
-			try {
-				const json = JSON.parse(fs.readFileSync(arg + "/package.json", "utf-8"))
-				dependencies.push(
-					...Object.keys(json.dependencies).map(d => ({
-						name: d,
-						dev: false,
-						folder: arg
-					})),
-					...Object.keys(json.devDependencies || {}).map(d => ({
-						name: d,
-						dev: true,
-						folder: arg
-					}))
-				)
-			} catch {
-				console.error("Could not find a package.json in " + arg)
-				process.exit()
-			}
+		if (args.length > 2) {
+			console.log("Too many arguements passed")
+			process.exit()
 		}
 
-		const repository = process.cwd().split("\\").at(-1)
-		for (let { name, dev, folder } of dependencies.sort((a, b) =>
-			a.name.localeCompare(b.name)
-		)) {
-			console.log(
-				[
-					"\t-   [![",
-					name,
-					"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
-					repository,
-					dev ? "/dev/" : "/",
-					name,
-					"?style=flat-square",
-					folder !== "." ? `&filename=${folder}/package.json` : "",
-					")](https://npmjs.com/package/",
-					name,
-					")"
-				].join("")
-			)
-		}
+		fs.readFile(args[1] + "/package.json", (err, data) => {
+			if (err) {
+				console.error("Could not find a package.json in that folder")
+				process.exit()
+			}
+
+			const repository = process.cwd().split("\\").at(-1)
+			const json = JSON.parse(data)
+			json.devDependencies = json.devDependencies || {}
+
+			const dependencies = { ...json.dependencies, ...json.devDependencies }
+			const sortedDependencies = Object.keys(dependencies)
+				.sort()
+				.reduce((r, k) => ((r[k] = dependencies[k]), r), {})
+
+			for (const dependency in sortedDependencies) {
+				console.log(
+					[
+						"\t-   [![",
+						dependency,
+						"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
+						repository,
+						dependency in json.dependencies ? "/" : "/dev/",
+						dependency,
+						"?style=flat-square",
+						args[1] !== "." ? `&filename=${args[1]}/package.json` : "",
+						")](https://npmjs.com/package/",
+						dependency,
+						")"
+					].join("")
+				)
+			}
+		})
 	}
 } else {
 	console.log(`No such operation  : ${args[0]}`)
