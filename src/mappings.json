@@ -8,5 +8,6 @@
 	},
 	"copy": {
 		"debugger": ["debugger.json"]
-	}
+	},
+	"gen": {}
 }
