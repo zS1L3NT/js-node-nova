@@ -5,7 +5,8 @@
 		"git": ".gitignore",
 		"ecf": ".editorconfig",
 		"prc": ".prettierrc",
-		"readme": "README.md"
+		"readme": "README.md",
+		"license": "LICENSE"
 	},
 	"copy": {
 		"debugger": "debugger.json"
