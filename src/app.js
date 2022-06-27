@@ -5,7 +5,7 @@ const fs = require("fs")
 const mappings = require("./mappings.json")
 
 if (args.length === 0) {
-	console.log(`No operation arguements passed`)
+	console.log(`No operation arguments passed`)
 	console.log(`Existing operations: ${Object.keys(mappings).join(", ")}`)
 	process.exit()
 }
@@ -13,7 +13,7 @@ if (args.length === 0) {
 if (args[0] in mappings) {
 	if (args[0] === "add") {
 		if (args.length === 1) {
-			console.log("No files arguements passed")
+			console.log("No files arguments passed")
 			console.log(`Existing operations: ${Object.keys(mappings.add).join(", ")}`)
 			process.exit()
 		}
@@ -30,7 +30,7 @@ if (args[0] in mappings) {
 
 	if (args[0] === "copy") {
 		if (args.length === 1) {
-			console.log("No files arguements passed")
+			console.log("No files arguments passed")
 			console.log(`Existing operations: ${Object.keys(mappings.copy).join(", ")}`)
 			process.exit()
 		}
@@ -47,12 +47,12 @@ if (args[0] in mappings) {
 
 	if (args[0] === "gen") {
 		if (args.length === 1) {
-			console.log("No file arguement passed")
+			console.log("No file argument passed")
 			process.exit()
 		}
 
 		if (args.length > 2) {
-			console.log("Too many arguements passed")
+			console.log("Too many arguments passed")
 			process.exit()
 		}
 
