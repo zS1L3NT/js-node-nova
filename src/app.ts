@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import * as path from "https://deno.land/std@0.145.0/path/mod.ts"
 import * as YAML from "https://deno.land/std@0.82.0/encoding/yaml.ts"
 
@@ -89,14 +90,42 @@ if (Deno.args[0] in mappings) {
 		}
 
 		try {
-			// deno-lint-ignore no-explicit-any
-			const yaml = <any>YAML.parse(await Deno.readTextFile(Deno.args[1] + "/pubspec.yaml"))
-			yaml.dev_dependencies = yaml.dev_dependencies || {}
+			const readDependencies = async (folder: string) => {
+				const yaml = <any>YAML.parse(await Deno.readTextFile(path.join(folder, "/pubspec.yaml")))
+				yaml.dev_dependencies = yaml.dev_dependencies || {}
 
-			const dependencies = { ...yaml.dependencies, ...yaml.dev_dependencies }
-			const sortedDependencies = Object.entries<string>(dependencies)
-				.filter(([, version]) => typeof version === "string")
-				.sort((a, b) => a[0].localeCompare(b[0]))
+				return <Record<string, any>>{
+					...yaml.dependencies,
+					...yaml.dev_dependencies
+				}
+			}
+
+			const dependencies = await Promise.all(
+				Object.entries(await readDependencies(Deno.args[1])).map<
+					Promise<Record<string, string>>
+				>(async ([dependency, value]) =>
+					typeof value === "string"
+						? { [dependency]: value + "" }
+						: "sdk" in value
+						? { [dependency]: "sdk" }
+						: <Record<string, string>>(
+								Object.fromEntries(
+									Object.entries(
+										await readDependencies(
+											path.join(Deno.args[1], <string>value.path)
+										)
+									).filter(([, value]) => typeof value === "string")
+								)
+						  )
+				)
+			)
+
+			const sortedDependencies = Object.entries(
+				dependencies.reduce(
+					(acc, curr) => ({ ...acc, ...curr }),
+					<Record<string, string>>{}
+				)
+			).sort((a, b) => a[0].localeCompare(b[0]))
 
 			for (const [dependency, version] of sortedDependencies) {
 				console.log(
