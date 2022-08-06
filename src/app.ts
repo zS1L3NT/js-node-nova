@@ -1,4 +1,5 @@
 import * as path from "https://deno.land/std@0.145.0/path/mod.ts"
+import * as YAML from "https://deno.land/std@0.82.0/encoding/yaml.ts"
 
 const getRelativeFile = (file: string) =>
 	path.join(path.dirname(path.fromFileUrl(import.meta.url)), file)
@@ -54,12 +55,11 @@ if (Deno.args[0] in mappings) {
 			Deno.exit()
 		}
 
-		try {
-			console.log(Deno.args)
-			const data = await Deno.readTextFile(Deno.args[1] + "/package.json")
+		let errors = 0
+		const repository = Deno.cwd().split("\\").at(-1)
 
-			const repository = Deno.cwd().split("\\").at(-1)
-			const json = JSON.parse(data)
+		try {
+			const json = JSON.parse(await Deno.readTextFile(Deno.args[1] + "/package.json"))
 			json.devDependencies = json.devDependencies || {}
 
 			const dependencies = { ...json.dependencies, ...json.devDependencies }
@@ -84,9 +84,42 @@ if (Deno.args[0] in mappings) {
 					].join("")
 				)
 			}
-		} catch (err) {
-			console.error("Could not find a package.json in that folder")
-			Deno.exit()
+		} catch {
+			errors++
+		}
+
+		try {
+			// deno-lint-ignore no-explicit-any
+			const yaml = <any>YAML.parse(await Deno.readTextFile(Deno.args[1] + "/pubspec.yaml"))
+			yaml.dev_dependencies = yaml.dev_dependencies || {}
+
+			const dependencies = { ...yaml.dependencies, ...yaml.dev_dependencies }
+			const sortedDependencies = Object.entries<string>(dependencies)
+				.filter(([, version]) => typeof version === "string")
+				.sort((a, b) => a[0].localeCompare(b[0]))
+
+			for (const [dependency, version] of sortedDependencies) {
+				console.log(
+					[
+						"\t-   [![",
+						dependency,
+						"](https://img.shields.io/badge/",
+						encodeURIComponent(dependency).replaceAll("-", "--"),
+						"-",
+						encodeURIComponent(version).replaceAll("-", "--"),
+						"-blue?style=flat-square",
+						")](https://pub.dev/packages/",
+						encodeURIComponent(dependency),
+						")"
+					].join("")
+				)
+			}
+		} catch {
+			errors++
+		}
+
+		if (errors === 2) {
+			console.log("No pubspec.yaml or package.json found")
 		}
 	}
 } else {
