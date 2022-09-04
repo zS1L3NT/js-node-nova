@@ -5,6 +5,7 @@
 		"git": ".gitignore",
 		"ecf": ".editorconfig",
 		"prc": ".prettierrc",
+		"npmi": ".npmignore",
 		"readme": "README.md",
 		"license": "LICENSE"
 	},

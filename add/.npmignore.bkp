@@ -1,0 +1,7 @@
+/.github
+/src
+.editorconfig
+.gitignore
+.prettierrc
+nodemon.json
+tsconfig.json
