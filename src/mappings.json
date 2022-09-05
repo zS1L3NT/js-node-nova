@@ -6,6 +6,7 @@
 		"ecf": ".editorconfig",
 		"prc": ".prettierrc",
 		"npmi": ".npmignore",
+		"docki": ".dockerignore",
 		"readme": "README.md",
 		"license": "LICENSE"
 	},
