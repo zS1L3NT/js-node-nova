@@ -10,9 +10,9 @@ const clone = new Command()
 const set = new Command()
 	.name("set")
 	.description("Set the repository secret, update if it already exists")
-	.arguments("<filename>")
-	.action((_, filename) => {
-		console.log("Set:", filename)
+	.arguments("<path>")
+	.action((_, path) => {
+		console.log("Set:", path)
 	})
 
 const secret = new Command()
