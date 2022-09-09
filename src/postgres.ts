@@ -20,7 +20,7 @@ export class Config extends Model {
 			primaryKey: true
 		},
 		shorthand: DataTypes.STRING,
-		content: DataTypes.STRING
+		content: DataTypes.TEXT
 	}
 }
 
@@ -34,7 +34,7 @@ export class Secret extends Model {
 			primaryKey: true
 		},
 		path: DataTypes.STRING,
-		content: DataTypes.STRING
+		content: DataTypes.TEXT
 	}
 }
 
