@@ -1,6 +1,10 @@
-import "dotenv/load.ts"
-
 import { Database, DataTypes, Model, PostgresConnector } from "denodb/mod.ts"
+import { config } from "dotenv/mod.ts"
+
+config({
+	path: "C:\\Projects\\ts-deno-nova\\.env",
+	export: true
+})
 
 const connection = new PostgresConnector({
 	uri: Deno.env.get("DATABASE_URL")!
