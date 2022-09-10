@@ -11,10 +11,10 @@ const connection = new PostgresConnector({
 export const db = new Database(connection)
 
 export class Config extends Model {
-	static table = "configs"
-	static timestamps = true
+	static override table = "configs"
+	static override timestamps = true
 
-	static fields = {
+	static override fields = {
 		filename: {
 			type: DataTypes.STRING,
 			primaryKey: true
@@ -25,10 +25,10 @@ export class Config extends Model {
 }
 
 export class Secret extends Model {
-	static table = "secrets"
-	static timestamps = true
+	static override table = "secrets"
+	static override timestamps = true
 
-	static fields = {
+	static override fields = {
 		project: {
 			type: DataTypes.STRING,
 			primaryKey: true

@@ -15,8 +15,10 @@ export default new Command()
 			directory = "."
 		}
 
+		const project = Deno.cwd().split("\\").at(-1)!
+
 		try {
-			const json = JSON.parse(await Deno.readTextFile(Deno.args[1] + "/package.json"))
+			const json = JSON.parse(await Deno.readTextFile(directory + "/package.json"))
 			json.devDependencies = json.devDependencies || {}
 
 			const dependencies = { ...json.dependencies, ...json.devDependencies }
@@ -30,11 +32,11 @@ export default new Command()
 						"\t-   [![",
 						dependency,
 						"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
-						directory,
+						project,
 						dependency in json.dependencies ? "/" : "/dev/",
 						dependency,
 						"?style=flat-square",
-						Deno.args[1] !== "." ? `&filename=${Deno.args[1]}/package.json` : "",
+						directory !== "." ? `&filename=${directory}/package.json` : "",
 						")](https://npmjs.com/package/",
 						dependency,
 						")"
@@ -59,7 +61,7 @@ export default new Command()
 			}
 
 			const dependencies = await Promise.all(
-				Object.entries(await readDependencies(Deno.args[1])).map<
+				Object.entries(await readDependencies(directory)).map<
 					Promise<Record<string, string>>
 				>(async ([dependency, value]) =>
 					typeof value === "string"
@@ -70,7 +72,7 @@ export default new Command()
 								Object.fromEntries(
 									Object.entries(
 										await readDependencies(
-											path.join(Deno.args[1], <string>value.path)
+											path.join(directory!, <string>value.path)
 										)
 									).filter(([, value]) => typeof value === "string")
 								)
