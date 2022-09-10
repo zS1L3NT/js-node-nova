@@ -1,7 +1,7 @@
 import { Command } from "cliffy/command/mod.ts"
 import { Secret as SecretPrompt } from "cliffy/prompt/mod.ts"
 
-import { decrypt, encrypt } from "../aes.ts"
+import { decrypt, encrypt, validate } from "../aes.ts"
 import { Secret } from "../postgres.ts"
 
 const clone = new Command()
@@ -9,7 +9,7 @@ const clone = new Command()
 	.description("Clone the repository secret to the original location")
 	.action(async _ => {
 		const key = await SecretPrompt.prompt("Enter decryption key: ")
-		if (key !== Deno.env.get("AES__KEY")) {
+		if (!(await validate(key))) {
 			console.log("Incorrect key")
 			return
 		}
@@ -35,7 +35,7 @@ const set = new Command()
 	.arguments("<path>")
 	.action(async (_, path) => {
 		const key = await SecretPrompt.prompt("Enter encryption key: ")
-		if (key !== Deno.env.get("AES__KEY")) {
+		if (!(await validate(key))) {
 			console.log("Incorrect key")
 			return
 		}
