@@ -1,6 +1,6 @@
-import { Command } from "https://deno.land/x/cliffy@v0.25.0/command/mod.ts"
-import { Row } from "https://deno.land/x/cliffy@v0.25.0/table/row.ts"
-import { Table } from "https://deno.land/x/cliffy@v0.25.0/table/table.ts"
+import { Command } from "cliffy/command/mod.ts"
+import { Row } from "cliffy/table/row.ts"
+import { Table } from "cliffy/table/table.ts"
 
 import { Config } from "../postgres.ts"
 

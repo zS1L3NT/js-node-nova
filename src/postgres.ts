@@ -1,8 +1,6 @@
-import "https://deno.land/x/dotenv@v3.2.0/load.ts"
+import "dotenv/load.ts"
 
-import {
-	Database, DataTypes, Model, PostgresConnector
-} from "https://deno.land/x/denodb@v1.0.40/mod.ts"
+import { Database, DataTypes, Model, PostgresConnector } from "denodb/mod.ts"
 
 const connection = new PostgresConnector({
 	uri: Deno.env.get("DATABASE_URL")!

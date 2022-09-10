@@ -1,8 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
 
-import path from "https://deno.land/std@0.154.0/node/path.ts"
-import * as YAML from "https://deno.land/std@0.82.0/encoding/yaml.ts"
-import { Command } from "https://deno.land/x/cliffy@v0.25.0/command/mod.ts"
+import { Command } from "cliffy/command/mod.ts"
+import path from "path"
+import * as YAML from "yaml"
 
 export default new Command()
 	.name("generate")

@@ -1,4 +1,4 @@
-import { Command } from "https://deno.land/x/cliffy@v0.25.0/command/mod.ts"
+import { Command } from "cliffy/command/mod.ts"
 
 import config from "./commands/config.ts"
 import generate from "./commands/generate.ts"

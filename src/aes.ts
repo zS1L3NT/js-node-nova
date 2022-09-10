@@ -1,4 +1,4 @@
-import { AES } from "https://deno.land/x/god_crypto@v1.4.10/aes.ts"
+import { AES } from "god_crypto/aes.ts"
 
 export const encrypt = async (data: string, key: string) => {
 	const aes = new AES(key.repeat(32).slice(0, 32), {

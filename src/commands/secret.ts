@@ -1,5 +1,5 @@
-import { Command } from "https://deno.land/x/cliffy@v0.25.0/command/mod.ts"
-import { Secret as SecretPrompt } from "https://deno.land/x/cliffy@v0.25.0/prompt/mod.ts"
+import { Command } from "cliffy/command/mod.ts"
+import { Secret as SecretPrompt } from "cliffy/prompt/mod.ts"
 
 import { decrypt, encrypt } from "../aes.ts"
 import { Secret } from "../postgres.ts"
