@@ -47,6 +47,10 @@ const set = new Command()
 		}
 
 		try {
+			await Secret.where({
+				project: match[1]!
+			}).delete()
+
 			await Secret.create({
 				project: match[1]!,
 				path,
