@@ -1,9 +1,7 @@
 {
 	"compilerOptions": {
-		/** Transpiler */
-		"lib": ["deno.window", "esnext"], // "dom", "dom.iterable", "esnext"
+		"lib": ["deno.window", "esnext"],
 
-		/** Type Checking */
 		"strict": true,
 		"strictNullChecks": true,
 		"strictFunctionTypes": true,
@@ -16,14 +14,6 @@
 		"noUncheckedIndexedAccess": true,
 		"noImplicitOverride": true,
 		"allowUnusedLabels": true
-
-		/** Other */
-		// "noEmit": true,
-		// "allowJs": true,
-		// "jsx": "react-jsx",
-		// "skipLibCheck": true,
-		// "isolatedModules": true,
-		// "incremental": true
 	},
 	"importMap": "importMap.json"
 }

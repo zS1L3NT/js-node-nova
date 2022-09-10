@@ -4,66 +4,89 @@ import { Command } from "cliffy/command/mod.ts"
 import path from "path"
 import * as YAML from "yaml"
 
-export default new Command()
-	.name("generate")
-	.description("Generate the `Built with` section for my README.md files")
-	.arguments("[directory]")
-	.action(async (_, directory) => {
-		let errors = 0
+enum ReadResult {
+	NoFile,
+	Error,
+	Success
+}
 
-		if (!directory) {
-			directory = "."
+const readPackageJson = async (directory: string): Promise<ReadResult> => {
+	let text: string
+	try {
+		text = await Deno.readTextFile(path.join(directory, "package.json"))
+	} catch {
+		return ReadResult.NoFile
+	}
+
+	try {
+		const package_ = JSON.parse(text)
+
+		if (!("dependencies" in package_)) {
+			console.error("No dependencies in package.json, cannot generate dependency list")
+			return ReadResult.Error
 		}
 
-		const project = Deno.cwd().split("\\").at(-1)!
+		package_.devDependencies = package_.devDependencies || {}
 
-		try {
-			const json = JSON.parse(await Deno.readTextFile(directory + "/package.json"))
-			json.devDependencies = json.devDependencies || {}
+		const dependencies = { ...package_.dependencies, ...package_.devDependencies }
+		const sortedDependencies = Object.keys(dependencies)
+			.sort()
+			.reduce((r, k) => ((r[k] = dependencies[k]), r), {} as Record<string, string>)
 
-			const dependencies = { ...json.dependencies, ...json.devDependencies }
-			const sortedDependencies = Object.keys(dependencies)
-				.sort()
-				.reduce((r, k) => ((r[k] = dependencies[k]), r), {} as Record<string, string>)
-
-			for (const dependency in sortedDependencies) {
-				console.log(
-					[
-						"\t-   [![",
-						dependency,
-						"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
-						project,
-						dependency in json.dependencies ? "/" : "/dev/",
-						dependency,
-						"?style=flat-square",
-						directory !== "." ? `&filename=${directory}/package.json` : "",
-						")](https://npmjs.com/package/",
-						dependency,
-						")"
-					].join("")
-				)
-			}
-		} catch {
-			errors++
+		for (const dependency in sortedDependencies) {
+			console.log(
+				[
+					"\t-   [![",
+					dependency,
+					"](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/",
+					path.join(Deno.cwd(), directory).split("\\").at(-1)!,
+					dependency in package_.dependencies ? "/" : "/dev/",
+					dependency,
+					"?style=flat-square",
+					directory !== "." ? `&filename=${directory}/package.json` : "",
+					")](https://npmjs.com/package/",
+					dependency,
+					")"
+				].join("")
+			)
 		}
 
-		try {
-			const readDependencies = async (folder: string) => {
-				const yaml = <any>(
-					YAML.parse(await Deno.readTextFile(path.join(folder, "/pubspec.yaml")))
-				)
-				yaml.dev_dependencies = yaml.dev_dependencies || {}
+		return ReadResult.Success
+	} catch (err) {
+		console.error(err)
+		return ReadResult.Error
+	}
+}
 
-				return <Record<string, any>>{
-					...yaml.dependencies,
-					...yaml.dev_dependencies
-				}
+const readPubspecYaml = async (directory: string): Promise<ReadResult> => {
+	try {
+		await Deno.readTextFile(path.join(directory, "pubspec.yaml"))
+	} catch {
+		return ReadResult.NoFile
+	}
+
+	try {
+		const readDependencies = async (folder: string) => {
+			const pubspec = <any>(
+				YAML.parse(await Deno.readTextFile(path.join(folder, "pubspec.yaml")))
+			)
+
+			if (!("dependencies" in pubspec)) {
+				console.error(`No dependencies in ${folder}/pubspec.yaml, cannot generate dependency list`)
+				return ReadResult.Error
 			}
 
-			const dependencies = await Promise.all(
-				Object.entries(await readDependencies(directory)).map<
-					Promise<Record<string, string>>
-				>(async ([dependency, value]) =>
+			pubspec.dev_dependencies = pubspec.dev_dependencies || {}
+
+			return <Record<string, any>>{
+				...pubspec.dependencies,
+				...pubspec.dev_dependencies
+			}
+		}
+
+		const dependencies = await Promise.all(
+			Object.entries(await readDependencies(directory)).map<Promise<Record<string, string>>>(
+				async ([dependency, value]) =>
 					typeof value === "string"
 						? { [dependency]: value + "" }
 						: "sdk" in value
@@ -77,37 +100,106 @@ export default new Command()
 									).filter(([, value]) => typeof value === "string")
 								)
 						  )
-				)
 			)
+		)
 
-			const sortedDependencies = Object.entries(
-				dependencies.reduce(
-					(acc, curr) => ({ ...acc, ...curr }),
-					<Record<string, string>>{}
-				)
-			).sort((a, b) => a[0].localeCompare(b[0]))
+		const sortedDependencies = Object.entries(
+			dependencies.reduce((acc, curr) => ({ ...acc, ...curr }), <Record<string, string>>{})
+		).sort((a, b) => a[0].localeCompare(b[0]))
 
-			for (const [dependency, version] of sortedDependencies) {
-				console.log(
-					[
-						"\t-   [![",
-						dependency,
-						"](https://img.shields.io/badge/",
-						encodeURIComponent(dependency).replaceAll("-", "--"),
-						"-",
-						encodeURIComponent(version).replaceAll("-", "--"),
-						"-blue?style=flat-square",
-						")](https://pub.dev/packages/",
-						encodeURIComponent(dependency),
-						")"
-					].join("")
-				)
-			}
-		} catch {
-			errors++
+		for (const [dependency, version] of sortedDependencies) {
+			console.log(
+				[
+					"\t-   [![",
+					dependency,
+					"](https://img.shields.io/badge/",
+					encodeURIComponent(dependency).replaceAll("-", "--"),
+					"-",
+					encodeURIComponent(version).replaceAll("-", "--"),
+					"-blue?style=flat-square",
+					")](https://pub.dev/packages/",
+					encodeURIComponent(dependency),
+					")"
+				].join("")
+			)
 		}
 
-		if (errors === 2) {
-			console.log("No pubspec.yaml or package.json found")
+		return ReadResult.Success
+	} catch (err) {
+		console.error(err)
+		return ReadResult.Error
+	}
+}
+
+const readDenoJson = async (directory: string): Promise<ReadResult> => {
+	let text: string
+	try {
+		text = await Deno.readTextFile(path.join(directory, "deno.json"))
+	} catch {
+		return ReadResult.NoFile
+	}
+
+	try {
+		const deno = JSON.parse(text)
+
+		if (!("importMap" in deno)) {
+			console.error("No importMap in deno.json, cannot generate dependency list")
+			return ReadResult.Error
 		}
+
+		const importMap = JSON.parse(await Deno.readTextFile(path.join(directory, deno.importMap)))
+		if (!("imports" in importMap)) {
+			console.error(`No imports in ${deno.importMap}, cannot generate dependency list`)
+			return ReadResult.Error
+		}
+
+		const dependencies = Object.entries<string>(importMap.imports)
+			.filter(([key]) => key.endsWith("/"))
+			.map<[string, string]>(([key, value]) => [
+				key.slice(0, -1),
+				value.split("@")[1]!.slice(1, -1)
+			])
+
+		for (const [dependency, version] of dependencies) {
+			console.log(
+				[
+					"\t-   [![",
+					dependency,
+					"](https://img.shields.io/badge/",
+					encodeURIComponent(dependency).replaceAll("-", "--"),
+					"-",
+					encodeURIComponent(version).replaceAll("-", "--"),
+					"-blue?style=flat-square",
+					")](https://deno.land/x/",
+					encodeURIComponent(dependency),
+					"@v",
+					encodeURIComponent(version),
+					")"
+				].join("")
+			)
+		}
+
+		return ReadResult.Success
+	} catch (err) {
+		console.error(err)
+		return ReadResult.Error
+	}
+}
+
+export default new Command()
+	.name("generate")
+	.description("Generate the `Built with` section for my README.md files")
+	.arguments("[directory]")
+	.action(async (_, directory) => {
+		if (!directory) {
+			directory = "."
+		}
+
+		const readers = [readPackageJson, readPubspecYaml, readDenoJson]
+		for (const reader of readers) {
+			const result = await reader(directory)
+			if (result !== ReadResult.NoFile) return
+		}
+
+		console.log("No package.json, deno.json or pubspec.yaml found")
 	})
