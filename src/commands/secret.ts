@@ -8,7 +8,7 @@ const clone = new Command()
 	.name("clone")
 	.description("Clone the repository secret to the original location")
 	.action(async _ => {
-		const key = await SecretPrompt.prompt("Enter encryption key: ")
+		const key = await SecretPrompt.prompt("Enter decryption key: ")
 		if (key !== Deno.env.get("AES__KEY")) {
 			console.log("Incorrect key")
 			return
