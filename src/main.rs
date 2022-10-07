@@ -3,6 +3,7 @@ mod models;
 mod schema;
 
 use {
+    commands::config,
     diesel::{Connection, PgConnection},
     dotenv::dotenv,
     seahorse::App,
@@ -20,7 +21,8 @@ pub fn create_connection() -> PgConnection {
 fn main() {
     let app = App::new("nova")
         .description("A CLI for helping me with various tasks")
-        .action(|context| context.help());
+        .command(config())
+        .action(|config| config.help());
 
     app.run(args().collect::<Vec<String>>());
 }
