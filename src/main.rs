@@ -1,13 +1,26 @@
 mod commands;
+mod models;
+mod schema;
 
-use {dotenv::dotenv, seahorse::App, std::env::args};
+use {
+    diesel::{Connection, PgConnection},
+    dotenv::dotenv,
+    seahorse::App,
+    std::env::{self, args},
+};
 
-fn main() {
+pub fn create_connection() -> PgConnection {
     dotenv().ok();
 
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+}
+
+fn main() {
     let app = App::new("nova")
         .description("A CLI for helping me with various tasks")
-        .action(|c| c.help());
+        .action(|context| context.help());
 
     app.run(args().collect::<Vec<String>>());
 }
