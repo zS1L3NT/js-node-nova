@@ -398,7 +398,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust"
+name = "rs-nova"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
