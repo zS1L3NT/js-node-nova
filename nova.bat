@@ -1,1 +1,0 @@
-cls && deno run --allow-env --allow-read --allow-write --allow-net --no-check --unstable C:/Projects/ts-deno-nova/src/app.ts %*
