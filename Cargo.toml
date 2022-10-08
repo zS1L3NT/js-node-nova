@@ -1,0 +1,18 @@
+[package]
+name = "rs-nova"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aes-gcm = "0.10.1"
+base64 = "0.13.0"
+dialoguer = "0.10.2"
+diesel = { version = "2.0.0", features = ["postgres"] }
+dotenv = "0.15.0"
+parson = "1.1.0"
+regex = "1.6.0"
+seahorse = "2.1"
+toml = "0.5.9"
+urlencoding = "2.1.2"
