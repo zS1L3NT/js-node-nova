@@ -9,30 +9,24 @@ fn clone() -> Command {
     Command::new("clone")
         .description("Clone project configuration file(s) to the current working directory")
         .action(|context| {
-            let shorthand = match context.args.first() {
-                Some(arg) => arg,
-                None => {
-                    println!("No shorthand provided");
-                    return;
-                }
-            };
+            for shorthand in &context.args {
+                let config = match configs::dsl::configs
+                    .filter(configs::shorthand.eq(shorthand))
+                    .first::<Config>(&mut create_connection())
+                {
+                    Ok(config) => config,
+                    Err(_) => {
+                        println!("Unknown config shorthand: {}", shorthand);
+                        continue;
+                    }
+                };
 
-            let config = match configs::dsl::configs
-                .filter(configs::shorthand.eq(shorthand))
-                .first::<Config>(&mut create_connection())
-            {
-                Ok(config) => config,
-                Err(_) => {
-                    println!("Unknown config shorthand: {}", shorthand);
-                    return;
-                }
-            };
-
-            match fs::write(PathBuf::from(&config.filename), config.content) {
-                Ok(_) => println!("Wrote to file: {}", config.filename),
-                Err(err) => {
-                    println!("Unable to write file: {}", config.filename);
-                    println!("Error: {}", err);
+                match fs::write(PathBuf::from(&config.filename), config.content) {
+                    Ok(_) => println!("Wrote to file: {}", config.filename),
+                    Err(err) => {
+                        println!("Unable to write file: {}", config.filename);
+                        println!("Error: {}", err);
+                    }
                 }
             }
         })
