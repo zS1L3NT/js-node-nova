@@ -17,7 +17,7 @@ fn clone() -> Command {
         .description("Clone the repository secret to the original location")
         .action(|_| {
             let key = Password::with_theme(&ColorfulTheme::default())
-                .with_prompt("Enter decryption key: ")
+                .with_prompt("Enter password: ")
                 .interact()
                 .unwrap();
 
@@ -101,7 +101,7 @@ fn set() -> Command {
             };
 
             let key = Password::with_theme(&ColorfulTheme::default())
-                .with_prompt("Enter decryption key: ")
+                .with_prompt("Enter password: ")
                 .interact()
                 .unwrap();
 
