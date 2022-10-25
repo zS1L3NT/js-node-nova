@@ -9,7 +9,7 @@ use {
     diesel::{insert_into, prelude::*},
     regex::Regex,
     seahorse::Command,
-    std::{env, fs, path::PathBuf},
+    std::{env::current_dir, fs, path::PathBuf},
 };
 
 fn clone() -> Command {
@@ -27,12 +27,12 @@ fn clone() -> Command {
             }
 
             let regex = Regex::new(r#"^C:\\Projects\\([^\\]*)$"#).unwrap();
-            if !regex.is_match(env::current_dir().unwrap().to_str().unwrap()) {
+            if !regex.is_match(current_dir().unwrap().to_str().unwrap()) {
                 println!("Invalid project path");
                 return;
             }
 
-            let directory = env::current_dir().unwrap();
+            let directory = current_dir().unwrap();
             let project = match regex.captures(directory.to_str().unwrap()) {
                 Some(captures) => captures.get(1).unwrap().as_str(),
                 None => {
@@ -70,12 +70,12 @@ fn set() -> Command {
         .description("Set the repository secret, update if it already exists")
         .action(|context| {
             let regex = Regex::new(r#"^C:\\Projects\\([^\\]*)$"#).unwrap();
-            if !regex.is_match(env::current_dir().unwrap().to_str().unwrap()) {
+            if !regex.is_match(current_dir().unwrap().to_str().unwrap()) {
                 println!("Invalid project path");
                 return;
             }
 
-            let directory = env::current_dir().unwrap();
+            let directory = current_dir().unwrap();
             let project = match regex.captures(directory.to_str().unwrap()) {
                 Some(captures) => captures.get(1).unwrap().as_str().into(),
                 None => {

@@ -3,11 +3,11 @@ use {
         aead::{AeadInPlace, KeyInit, Result},
         Aes256Gcm, Nonce,
     },
-    std::{env, str},
+    std::{env::var, str},
 };
 
 pub fn validate(key: &String) -> bool {
-    let encrypted_key = env::var("AES__ENCRYPTED_KEY").expect("AES__ENCRYPTED_KEY must be set");
+    let encrypted_key = var("AES__ENCRYPTED_KEY").unwrap();
     match decrypt(&encrypted_key, key) {
         Ok(data) => &data == key,
         Err(_) => false,
@@ -18,7 +18,7 @@ pub fn encrypt(data: &String, key: &str) -> Result<String> {
     let key = key.repeat(32);
     let key = key[0..32].as_bytes();
     let cipher = Aes256Gcm::new_from_slice(key).unwrap();
-    let nonce = env::var("AES__NONCE").expect("AES__NONCE must be set");
+    let nonce = var("AES__NONCE").unwrap();
     let nonce = Nonce::from_slice(nonce.as_bytes());
 
     let mut buffer = data.as_bytes().to_vec();
@@ -30,7 +30,7 @@ pub fn decrypt(data: &String, key: &str) -> Result<String> {
     let key = key.repeat(32);
     let key = key[0..32].as_bytes();
     let cipher = Aes256Gcm::new_from_slice(key).unwrap();
-    let nonce = env::var("AES__NONCE").expect("AES__NONCE must be set");
+    let nonce = var("AES__NONCE").unwrap();
     let nonce = Nonce::from_slice(nonce.as_bytes());
 
     let mut buffer = base64::decode(data).unwrap();

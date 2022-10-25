@@ -1,11 +1,11 @@
 use {
     parson::{JSONObject, JSONValue},
     seahorse::Command,
-    std::{collections::HashMap, env, fs},
+    std::{collections::HashMap, env::current_dir, fs},
 };
 
 fn read_package_json() -> Option<()> {
-    let cwd = env::current_dir().unwrap();
+    let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("package.json")).ok()?;
     let package = text.parse::<JSONValue>().ok()?;
     let package = package.get_object().ok()?;
@@ -49,7 +49,7 @@ fn read_package_json() -> Option<()> {
 }
 
 fn read_cargo_toml() -> Option<()> {
-    let cwd = env::current_dir().unwrap();
+    let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("Cargo.toml")).ok()?;
     let cargo = text.parse::<toml::Value>().ok()?;
 
