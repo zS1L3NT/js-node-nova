@@ -51,6 +51,5 @@ $ cargo run
         -   [![urlencoding](https://img.shields.io/badge/urlencoding-2.1.2-blue?style=flat-square)](https://crates.io/crates/urlencoding/2.1.2)
 	- Miscellaneous
         -   [![dialoguer](https://img.shields.io/badge/dialoguer-0.10.2-blue?style=flat-square)](https://crates.io/crates/dialoguer/0.10.2)
-        -   [![dotenv](https://img.shields.io/badge/dotenv-0.15.0-blue?style=flat-square)](https://crates.io/crates/dotenv/0.15.0)
         -   [![regex](https://img.shields.io/badge/regex-1.6.0-blue?style=flat-square)](https://crates.io/crates/regex/1.6.0)
         -   [![seahorse](https://img.shields.io/badge/seahorse-2.1-blue?style=flat-square)](https://crates.io/crates/seahorse/2.1)
