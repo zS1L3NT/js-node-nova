@@ -7,12 +7,12 @@ use {
     commands::{config, generate, secret},
     diesel::{Connection, PgConnection},
     seahorse::App,
-    std::env::{args, var},
+    std::env::args,
 };
 
 pub fn create_connection() -> PgConnection {
-    let database_url = var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
+    let database_url = option_env!("DATABASE_URL").unwrap();
+    PgConnection::establish(database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
