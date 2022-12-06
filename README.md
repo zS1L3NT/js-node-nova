@@ -24,10 +24,14 @@ I have had many TypeScript projects, and copying the config files into new proje
 		-	NodeJS Projects
 		-	DenoJS Projects
 		-	Dart Projects
+-	Listing all project secret files
+	-	`nova secrets list`
 -	Cloning a project secret file
-	-	`nova secret clone`
+	-	`nova secrets clone`
 -	Setting a project secret file
-	-	`nova secret set [file path]`
+	-	`nova secrets set [file path]`
+-	Removing a project secret file
+	-	`nova secrets set [file path]`
 
 ## Usage
 
@@ -36,6 +40,8 @@ To use Nova CLI, run this command
 ```
 $ cargo run
 ```
+
+Do note that the script needs the environment variables from [.env.example](.env.example)
 
 ## Built with
 
@@ -52,4 +58,5 @@ $ cargo run
 	- Miscellaneous
         -   [![dialoguer](https://img.shields.io/badge/dialoguer-0.10.2-blue?style=flat-square)](https://crates.io/crates/dialoguer/0.10.2)
         -   [![regex](https://img.shields.io/badge/regex-1.6.0-blue?style=flat-square)](https://crates.io/crates/regex/1.6.0)
+        -   [![prettytable-rs](https://img.shields.io/badge/prettytable--rs-%5E0.9.0-blue?style=flat-square)](https://crates.io/crates/prettytable-rs/0.9.0)
         -   [![seahorse](https://img.shields.io/badge/seahorse-2.1-blue?style=flat-square)](https://crates.io/crates/seahorse/2.1)
