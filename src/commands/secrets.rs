@@ -16,7 +16,7 @@ use {
 };
 
 fn authorize() -> Result<(String, String), String> {
-    let regex = Regex::new(r#"^C:\\Projects\\([^\\]*)\\?"#).unwrap();
+    let regex = Regex::new(r#"^C:\\Projects\\([^\\]*)$"#).unwrap();
     if !regex.is_match(current_dir().unwrap().to_str().unwrap()) {
         return Err("Invalid project path".into());
     }
