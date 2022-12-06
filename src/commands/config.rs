@@ -1,6 +1,7 @@
 use {
     super::super::{create_connection, models::Config, schema::configs},
     diesel::prelude::*,
+    prettytable::Table,
     seahorse::Command,
     std::{fs, path::PathBuf},
 };
@@ -40,9 +41,14 @@ fn list() -> Command {
                 .load::<Config>(&mut create_connection())
                 .unwrap();
 
+            let mut table = Table::new();
+			table.set_titles(prettytable::row!["Shorthand", "Filename"]);
+
             for config in configs {
-                println!("{}: {}", config.shorthand, config.filename);
+				table.add_row(prettytable::row![config.shorthand, config.filename]);
             }
+
+			table.printstd();
         })
 }
 
