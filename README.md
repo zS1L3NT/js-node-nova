@@ -1,6 +1,6 @@
 # Nova CLI
 
-![License](https://img.shields.io/github/license/zS1L3NT/ts-deno-nova?style=for-the-badge) ![Languages](https://img.shields.io/github/languages/count/zS1L3NT/ts-deno-nova?style=for-the-badge) ![Top Language](https://img.shields.io/github/languages/top/zS1L3NT/ts-deno-nova?style=for-the-badge) ![Commit Activity](https://img.shields.io/github/commit-activity/y/zS1L3NT/ts-deno-nova?style=for-the-badge) ![Last commit](https://img.shields.io/github/last-commit/zS1L3NT/ts-deno-nova?style=for-the-badge)
+![License](https://img.shields.io/github/license/zS1L3NT/rs-cli-nova?style=for-the-badge) ![Languages](https://img.shields.io/github/languages/count/zS1L3NT/rs-cli-nova?style=for-the-badge) ![Top Language](https://img.shields.io/github/languages/top/zS1L3NT/rs-cli-nova?style=for-the-badge) ![Commit Activity](https://img.shields.io/github/commit-activity/y/zS1L3NT/rs-cli-nova?style=for-the-badge) ![Last commit](https://img.shields.io/github/last-commit/zS1L3NT/rs-cli-nova?style=for-the-badge)
 
 Nova is my personal CLI for importing project config files into my new projects. Nova also helps me import project secrets back when I clone them from GitHub again or onto another machine.
 

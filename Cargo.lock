@@ -510,7 +510,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rs-nova"
+name = "rs-cli-nova"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
