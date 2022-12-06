@@ -1,7 +1,7 @@
 mod config;
 mod generate;
-mod secret;
+mod secrets;
 
 pub use config::config;
 pub use generate::generate;
-pub use secret::secret;
+pub use secrets::secrets;

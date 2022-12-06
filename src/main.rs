@@ -4,7 +4,7 @@ mod models;
 mod schema;
 
 use {
-    commands::{config, generate, secret},
+    commands::{config, generate, secrets},
     diesel::{Connection, PgConnection},
     seahorse::App,
     std::env::args,
@@ -25,7 +25,7 @@ fn main() {
         .description("A CLI for helping me with various tasks")
         .command(config())
         .command(generate())
-        .command(secret())
+        .command(secrets())
         .action(|config| config.help());
 
     app.run(args().collect::<Vec<String>>());

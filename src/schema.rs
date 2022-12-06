@@ -9,7 +9,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    secrets (project) {
+    secrets (project, path) {
         project -> Varchar,
         path -> Varchar,
         content -> Text,
