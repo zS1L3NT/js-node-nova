@@ -1,6 +1,10 @@
 use {
     seahorse::Command,
-    std::{collections::HashMap, env::current_dir, fs},
+    std::{
+        collections::HashMap,
+        fs,
+        path::{Path, PathBuf},
+    },
 };
 
 fn using_clean_url<T>(text: T) -> String
@@ -12,11 +16,10 @@ where
         .replace('_', "__")
 }
 
-fn read_package_json() -> Option<()> {
+fn read_package_json(folder: &Path) -> Option<()> {
     let mut output = String::new();
 
-    let cwd = current_dir().unwrap();
-    let text = fs::read_to_string(cwd.join("package.json")).ok()?;
+    let text = fs::read_to_string(folder.join("package.json")).ok()?;
     let json = serde_json::from_str::<serde_json::Value>(&text).ok()?;
 
     let dependencies = json
@@ -54,11 +57,10 @@ fn read_package_json() -> Option<()> {
     Some(())
 }
 
-fn read_pubspec_yaml() -> Option<()> {
+fn read_pubspec_yaml(folder: &Path) -> Option<()> {
     let mut output = String::new();
 
-    let cwd = current_dir().unwrap();
-    let text = fs::read_to_string(cwd.join("pubspec.yaml")).ok()?;
+    let text = fs::read_to_string(folder.join("pubspec.yaml")).ok()?;
     let yaml = serde_yaml::from_str::<serde_yaml::Value>(&text).ok()?;
 
     let dependencies = yaml
@@ -72,7 +74,7 @@ fn read_pubspec_yaml() -> Option<()> {
                 .as_mapping()?
                 .iter(),
         )
-        .filter(|(k, _)| k.as_str().unwrap() != "flutter" && k.as_str().unwrap() != "flutter_test")
+        .filter(|(_, v)| v.is_string())
         .map(|(k, v)| (k.as_str().unwrap(), v.as_str().unwrap()))
         .collect::<HashMap<_, _>>();
 
@@ -97,11 +99,10 @@ fn read_pubspec_yaml() -> Option<()> {
     Some(())
 }
 
-fn read_cargo_toml() -> Option<()> {
+fn read_cargo_toml(folder: &Path) -> Option<()> {
     let mut output = String::new();
 
-    let cwd = current_dir().unwrap();
-    let text = fs::read_to_string(cwd.join("Cargo.toml")).ok()?;
+    let text = fs::read_to_string(folder.join("Cargo.toml")).ok()?;
     let cargo = text.parse::<toml::Value>().ok()?;
 
     let dependencies = cargo.get("dependencies")?.as_table()?;
@@ -129,19 +130,28 @@ fn read_cargo_toml() -> Option<()> {
 pub fn generate() -> Command {
     Command::new("generate")
         .description("Generate the `Built with` section for my README.md files")
-        .action(|_| {
-            if read_package_json().is_some() {
-                return;
-            }
+        .action(|context| {
+            match context.args.first() {
+                Some(path) => {
+                    let path = PathBuf::from(path);
 
-            if read_pubspec_yaml().is_some() {
-                return;
-            }
+                    if read_package_json(&path).is_some() {
+                        return;
+                    }
 
-            if read_cargo_toml().is_some() {
-                return;
-            }
+                    if read_pubspec_yaml(&path).is_some() {
+                        return;
+                    }
 
-            println!("No package.json, pubspec.yaml or cargo.toml found");
+                    if read_cargo_toml(&path).is_some() {
+                        return;
+                    }
+
+                    println!("No package.json, pubspec.yaml or cargo.toml found");
+                }
+                None => {
+                    println!("No path provided");
+                }
+            };
         })
 }
