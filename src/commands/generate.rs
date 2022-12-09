@@ -1,5 +1,4 @@
 use {
-    parson::{JSONObject, JSONValue},
     seahorse::Command,
     std::{collections::HashMap, env::current_dir, fs},
 };
@@ -16,42 +15,74 @@ where
 fn read_package_json() -> Option<()> {
     let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("package.json")).ok()?;
-    let package = text.parse::<JSONValue>().ok()?;
-    let package = package.get_object().ok()?;
+    let json = serde_json::from_str::<serde_json::Value>(&text).ok()?;
 
-    let dependencies = package.get("dependencies")?;
-    let dependencies = dependencies.get_object().ok()?.to_hashmap();
-    let dependencies = dependencies
+    let dependencies = json
+        .as_object()?
+        .get("dependencies")?
+        .as_object()?
         .iter()
-        .map(|(k, v)| (k.to_string(), v.get_string().unwrap()))
-        .collect::<HashMap<_, _>>();
-
-    let default_dev_dependencies = JSONValue::from_object(JSONObject::new());
-    let dev_dependencies = package
-        .get("devDependencies")
-        .unwrap_or(&default_dev_dependencies);
-    let dev_dependencies = dev_dependencies.get_object().ok()?.to_hashmap();
-    let dev_dependencies = dev_dependencies
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.get_string().unwrap()))
-        .collect::<HashMap<_, _>>();
-
-    let dependencies = dependencies
-        .into_iter()
-        .chain(dev_dependencies.into_iter())
+        .chain(
+            json.as_object()?
+                .get("devDependencies")?
+                .as_object()?
+                .iter(),
+        )
+        .map(|(k, v)| (k.as_str(), v.as_str().unwrap()))
         .collect::<HashMap<_, _>>();
 
     let mut dependency_names = dependencies.keys().collect::<Vec<_>>();
     dependency_names.sort();
 
     for dependency in dependency_names {
-		let version = dependencies.get(dependency).unwrap();
+        let dependency = *dependency;
+        let version = *dependencies.get(dependency).unwrap();
+
         println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-red?style=flat-square)](https://npmjs.com/package/{}/v/{})",
 			dependency,
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
-			version
+			if let Some(version) = version.strip_prefix('^') {version} else {version}
+		);
+    }
+
+    Some(())
+}
+
+fn read_pubspec_yaml() -> Option<()> {
+    let cwd = current_dir().unwrap();
+    let text = fs::read_to_string(cwd.join("pubspec.yaml")).ok()?;
+    let yaml = serde_yaml::from_str::<serde_yaml::Value>(&text).ok()?;
+
+    let dependencies = yaml
+        .as_mapping()?
+        .get("dependencies")?
+        .as_mapping()?
+        .iter()
+        .chain(
+            yaml.as_mapping()?
+                .get("dev_dependencies")?
+                .as_mapping()?
+                .iter(),
+        )
+        .filter(|(k, _)| k.as_str().unwrap() != "flutter" && k.as_str().unwrap() != "flutter_test")
+        .map(|(k, v)| (k.as_str().unwrap(), v.as_str().unwrap()))
+        .collect::<HashMap<_, _>>();
+
+    let mut dependency_names = dependencies.keys().collect::<Vec<_>>();
+    dependency_names.sort();
+
+    for dependency in dependency_names {
+        let dependency = *dependency;
+        let version = *dependencies.get(dependency).unwrap();
+
+        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-blue?style=flat-square)](https://pub.dev/packages/{}/versions/{})",
+			dependency,
+			using_clean_url(dependency),
+			using_clean_url(version),
+			dependency,
+			if let Some(version) = version.strip_prefix('^') {version} else {version},
 		);
     }
 
@@ -71,7 +102,7 @@ fn read_cargo_toml() -> Option<()> {
             version.as_table()?.get("version")?.as_str()
         }?;
 
-        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-blue?style=flat-square)](https://crates.io/crates/{}/{})",
+        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-yellow?style=flat-square)](https://crates.io/crates/{}/{})",
 			dependency,
 			using_clean_url(dependency),
 			using_clean_url(version),
@@ -91,10 +122,14 @@ pub fn generate() -> Command {
                 return;
             }
 
+            if read_pubspec_yaml().is_some() {
+                return;
+            }
+
             if read_cargo_toml().is_some() {
                 return;
             }
 
-            println!("No package.json or cargo.toml found");
+            println!("No package.json, pubspec.yaml or cargo.toml found");
         })
 }
