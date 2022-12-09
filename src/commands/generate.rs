@@ -13,6 +13,8 @@ where
 }
 
 fn read_package_json() -> Option<()> {
+    let mut output = String::new();
+
     let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("package.json")).ok()?;
     let json = serde_json::from_str::<serde_json::Value>(&text).ok()?;
@@ -38,19 +40,23 @@ fn read_package_json() -> Option<()> {
         let dependency = *dependency;
         let version = *dependencies.get(dependency).unwrap();
 
-        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-red?style=flat-square)](https://npmjs.com/package/{}/v/{})",
+        output.push_str(&format!("        -   [![{}](https://img.shields.io/badge/{}-{}-red?style=flat-square)](https://npmjs.com/package/{}/v/{})\n",
 			dependency,
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
 			if let Some(version) = version.strip_prefix('^') {version} else {version}
-		);
+		));
     }
 
+    clipboard_win::set_clipboard_string(&output[..output.len() - 1]).unwrap();
+    println!("Copied package.json data to clipboard");
     Some(())
 }
 
 fn read_pubspec_yaml() -> Option<()> {
+    let mut output = String::new();
+
     let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("pubspec.yaml")).ok()?;
     let yaml = serde_yaml::from_str::<serde_yaml::Value>(&text).ok()?;
@@ -77,19 +83,23 @@ fn read_pubspec_yaml() -> Option<()> {
         let dependency = *dependency;
         let version = *dependencies.get(dependency).unwrap();
 
-        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-blue?style=flat-square)](https://pub.dev/packages/{}/versions/{})",
+        output.push_str(&format!("        -   [![{}](https://img.shields.io/badge/{}-{}-blue?style=flat-square)](https://pub.dev/packages/{}/versions/{})\n",
 			dependency,
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
 			if let Some(version) = version.strip_prefix('^') {version} else {version},
-		);
+		));
     }
 
+    clipboard_win::set_clipboard_string(&output[..output.len() - 1]).unwrap();
+    println!("Copied pubspec.yaml data to clipboard");
     Some(())
 }
 
 fn read_cargo_toml() -> Option<()> {
+    let mut output = String::new();
+
     let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("Cargo.toml")).ok()?;
     let cargo = text.parse::<toml::Value>().ok()?;
@@ -102,15 +112,17 @@ fn read_cargo_toml() -> Option<()> {
             version.as_table()?.get("version")?.as_str()
         }?;
 
-        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-yellow?style=flat-square)](https://crates.io/crates/{}/{})",
+        output.push_str(&format!("        -   [![{}](https://img.shields.io/badge/{}-{}-yellow?style=flat-square)](https://crates.io/crates/{}/{})\n",
 			dependency,
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
 			version,
-		);
+		));
     }
 
+    clipboard_win::set_clipboard_string(&output[..output.len() - 1]).unwrap();
+    println!("Copied Cargo.toml data to clipboard");
     Some(())
 }
 
