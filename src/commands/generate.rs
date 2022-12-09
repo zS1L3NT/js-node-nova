@@ -4,6 +4,15 @@ use {
     std::{collections::HashMap, env::current_dir, fs},
 };
 
+fn using_clean_url<T>(text: T) -> String
+where
+    T: Into<String>,
+{
+    urlencoding::encode(&text.into())
+        .replace('-', "--")
+        .replace('_', "__")
+}
+
 fn read_package_json() -> Option<()> {
     let cwd = current_dir().unwrap();
     let text = fs::read_to_string(cwd.join("package.json")).ok()?;
@@ -14,8 +23,8 @@ fn read_package_json() -> Option<()> {
     let dependencies = dependencies.get_object().ok()?.to_hashmap();
     let dependencies = dependencies
         .iter()
-        .map(|(k, _)| (k.to_string(), true))
-        .collect::<HashMap<String, bool>>();
+        .map(|(k, v)| (k.to_string(), v.get_string().unwrap()))
+        .collect::<HashMap<_, _>>();
 
     let default_dev_dependencies = JSONValue::from_object(JSONObject::new());
     let dev_dependencies = package
@@ -24,24 +33,25 @@ fn read_package_json() -> Option<()> {
     let dev_dependencies = dev_dependencies.get_object().ok()?.to_hashmap();
     let dev_dependencies = dev_dependencies
         .iter()
-        .map(|(k, _)| (k.to_string(), false))
-        .collect::<HashMap<String, bool>>();
+        .map(|(k, v)| (k.to_string(), v.get_string().unwrap()))
+        .collect::<HashMap<_, _>>();
 
-    let all_dependencies = dependencies
+    let dependencies = dependencies
         .into_iter()
         .chain(dev_dependencies.into_iter())
         .collect::<HashMap<_, _>>();
 
-    let mut all_dependency_names = all_dependencies.keys().collect::<Vec<_>>();
-    all_dependency_names.sort();
+    let mut dependency_names = dependencies.keys().collect::<Vec<_>>();
+    dependency_names.sort();
 
-    for dependency_name in all_dependency_names {
-        println!("\t-   [![{}](https://img.shields.io/github/package-json/dependency-version/zS1L3NT/{}{}{}?style=flat-square)](https://npmjs.com/package/{})",
-			dependency_name,
-			cwd.to_str()?.split('\\').last().unwrap(),
-			if *all_dependencies.get(dependency_name).unwrap() { "/" } else { "/dev/" },
-			dependency_name,
-			dependency_name
+    for dependency in dependency_names {
+		let version = dependencies.get(dependency).unwrap();
+        println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-red?style=flat-square)](https://npmjs.com/package/{}/v/{})",
+			dependency,
+			using_clean_url(dependency),
+			using_clean_url(version),
+			dependency,
+			version
 		);
     }
 
@@ -63,10 +73,10 @@ fn read_cargo_toml() -> Option<()> {
 
         println!("\t-   [![{}](https://img.shields.io/badge/{}-{}-blue?style=flat-square)](https://crates.io/crates/{}/{})",
 			dependency,
-			urlencoding::encode(dependency).replace('-', "--"),
-			urlencoding::encode(version).replace('-', "--"),
-			urlencoding::encode(dependency).replace('-', "--"),
-			urlencoding::encode(version).replace('-', "--"),
+			using_clean_url(dependency),
+			using_clean_url(version),
+			dependency,
+			version,
 		);
     }
 
