@@ -1,4 +1,5 @@
 use {
+	clipboard::{ClipboardProvider, ClipboardContext},
     seahorse::Command,
     std::{
         collections::HashMap,
@@ -52,7 +53,9 @@ fn read_package_json(folder: &Path) -> Option<()> {
 		));
     }
 
-    clipboard_win::set_clipboard_string(&output[..output.len() - 1]).unwrap();
+	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    ctx.set_contents(output[..output.len() - 1].into()).unwrap();
+	ctx.get_contents().unwrap();
     println!("Copied package.json data to clipboard");
     Some(())
 }
@@ -94,8 +97,9 @@ fn read_pubspec_yaml(folder: &Path) -> Option<()> {
 		));
     }
 
-    clipboard_win::set_clipboard_string(&output[..output.len() - 1]).unwrap();
-    println!("Copied pubspec.yaml data to clipboard");
+	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    ctx.set_contents(output[..output.len() - 1].into()).unwrap();
+	ctx.get_contents().unwrap();
     Some(())
 }
 
@@ -122,7 +126,9 @@ fn read_cargo_toml(folder: &Path) -> Option<()> {
 		));
     }
 
-    clipboard_win::set_clipboard_string(&output[..output.len() - 1]).unwrap();
+	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    ctx.set_contents(output[..output.len() - 1].into()).unwrap();
+	ctx.get_contents().unwrap();
     println!("Copied Cargo.toml data to clipboard");
     Some(())
 }
