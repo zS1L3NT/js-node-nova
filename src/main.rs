@@ -20,7 +20,7 @@ fn main() {
     option_env!("AES__ENCRYPTED_KEY").expect("AES__ENCRYPTED_KEY must be set");
     option_env!("AES__NONCE").expect("AES__NONCE must be set");
     option_env!("DATABASE_URL").expect("DATABASE_URL must be set");
-	option_env!("PROJECTS_DIR").expect("PROJECTS_DIR must be set");
+    option_env!("PROJECTS_DIR").expect("PROJECTS_DIR must be set");
 
     let app = App::new("nova")
         .description("A CLI for helping me with various tasks")
