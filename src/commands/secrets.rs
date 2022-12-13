@@ -15,15 +15,27 @@ use {
     std::{env::current_dir, fs, path::PathBuf},
 };
 
-fn authorize() -> Result<(String, String), String> {
-    let regex = Regex::new(r#"^C:\\Projects\\([^\\]*)$"#).unwrap();
-    if !regex.is_match(current_dir().unwrap().to_str().unwrap()) {
-        return Err("Invalid project path".into());
-    }
+struct AuthData {
+    project: String,
+    folder: Option<String>,
+    key: String,
+}
 
-    let directory = current_dir().unwrap();
-    let project = match regex.captures(directory.to_str().unwrap()) {
-        Some(captures) => captures.get(1).unwrap().as_str(),
+fn authorize() -> Result<AuthData, String> {
+    let mut response = AuthData {
+        project: String::new(),
+        folder: None,
+        key: String::new(),
+    };
+
+    match Regex::new(r#"Projects/([^/]*)/?(.+)?"#)
+        .unwrap()
+        .captures(&current_dir().unwrap().to_str().unwrap().replace('\\', "/"))
+    {
+        Some(captures) => {
+            response.project = captures.get(1).unwrap().as_str().into();
+            response.folder = captures.get(2).map(|m| m.as_str().to_string());
+        }
         None => {
             return Err("Invalid project path".into());
         }
@@ -37,7 +49,8 @@ fn authorize() -> Result<(String, String), String> {
     if !validate(&key) {
         Err("Incorrect key".into())
     } else {
-        Ok((project.into(), key))
+        response.key = key;
+        Ok(response)
     }
 }
 
@@ -45,8 +58,8 @@ fn list() -> Command {
     Command::new("list")
         .description("List all secret filenames for a repository without showing the data")
         .action(|_| {
-            let (project, key) = match authorize() {
-                Ok((project, key)) => (project, key),
+            let auth = match authorize() {
+                Ok(auth) => auth,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -54,7 +67,7 @@ fn list() -> Command {
             };
 
             let secrets = match secrets::dsl::secrets
-                .filter(secrets::project.eq(project))
+                .filter(secrets::project.eq(&auth.project))
                 .get_results::<Secret>(&mut create_connection())
             {
                 Ok(secret) => secret,
@@ -70,7 +83,7 @@ fn list() -> Command {
             for secret in secrets {
                 table.add_row(prettytable::row![
                     secret.path,
-                    decrypt(&secret.content, &key).unwrap().len()
+                    decrypt(&secret.content, &auth.key).unwrap().len()
                 ]);
             }
 
@@ -82,8 +95,8 @@ fn clone() -> Command {
     Command::new("clone")
         .description("Clone the repository secrets to their original locations")
         .action(|_| {
-            let (project, key) = match authorize() {
-                Ok((project, key)) => (project, key),
+            let auth = match authorize() {
+                Ok(auth) => auth,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -91,7 +104,7 @@ fn clone() -> Command {
             };
 
             let secrets = match secrets::dsl::secrets
-                .filter(secrets::project.eq(project))
+                .filter(secrets::project.eq(&auth.project))
                 .get_results::<Secret>(&mut create_connection())
             {
                 Ok(secret) => secret,
@@ -102,13 +115,13 @@ fn clone() -> Command {
             };
 
             for secret in secrets {
-                match fs::write(
-                    PathBuf::from(&secret.path),
-                    decrypt(&secret.content, &key).unwrap(),
-                ) {
-                    Ok(_) => println!("Wrote to file: {}", secret.path),
+                let absolute_path = PathBuf::from(option_env!("PROJECTS_DIR").unwrap())
+                    .join(&secret.project)
+                    .join(&secret.path);
+                match fs::write(&absolute_path, decrypt(&secret.content, &auth.key).unwrap()) {
+                    Ok(_) => println!("Wrote to file: {}", &secret.path),
                     Err(err) => {
-                        println!("Unable to write file: {}", secret.path);
+                        println!("Unable to write file: {}", &secret.path);
                         println!("Error: {}", err);
                     }
                 }
@@ -120,44 +133,48 @@ fn set() -> Command {
     Command::new("set")
         .description("Set a repository secret, update if it already exists")
         .action(|context| {
-            let (project, key) = match authorize() {
-                Ok((project, key)) => (project, key),
+            let auth = match authorize() {
+                Ok(auth) => auth,
                 Err(err) => {
                     println!("{}", err);
                     return;
                 }
             };
 
-            let path = match context.args.first() {
-                Some(path) => path.to_string(),
+            let cwd_relative_path = match context.args.first() {
+                Some(path) => path.to_string().replace('\\', "/"),
                 None => {
                     println!("No path provided");
                     return;
                 }
             };
 
-            let content = match fs::read_to_string(&path) {
+            let content = match fs::read_to_string(&cwd_relative_path) {
                 Ok(content) => content,
                 Err(_) => {
-                    println!("Unable to read file: {}", path);
+                    println!("Unable to read file: {}", cwd_relative_path);
                     return;
                 }
             };
 
             let secret = Secret {
-                project,
-                path: path.clone(),
-                content: encrypt(&content, &key).unwrap(),
+                project: auth.project,
+                path: PathBuf::from(&auth.folder.unwrap_or_default())
+                    .join(&cwd_relative_path)
+                    .to_str()
+                    .unwrap()
+                    .into(),
+                content: encrypt(&content, &auth.key).unwrap(),
             };
 
             let upsert = match secrets::dsl::secrets
                 .filter(secrets::project.eq(&secret.project))
-                .filter(secrets::path.eq(&path))
+                .filter(secrets::path.eq(&secret.path))
                 .first::<Secret>(&mut create_connection())
             {
                 Ok(_) => update(secrets::dsl::secrets)
                     .filter(secrets::project.eq(&secret.project))
-                    .filter(secrets::path.eq(&path))
+                    .filter(secrets::path.eq(&secret.path))
                     .set(secrets::content.eq(&secret.content))
                     .execute(&mut create_connection()),
                 Err(_) => insert_into(secrets::dsl::secrets)
@@ -167,10 +184,10 @@ fn set() -> Command {
 
             match upsert {
                 Ok(_) => {
-                    println!("Secret stored: {}", path);
+                    println!("Secret stored: {}", &secret.path);
                 }
                 Err(err) => {
-                    println!("Unable to store secret: {}", path);
+                    println!("Unable to store secret: {}", &secret.path);
                     println!("Error: {}", err);
                 }
             }
@@ -181,32 +198,37 @@ fn remove() -> Command {
     Command::new("remove")
         .description("Remove a repository secret")
         .action(|context| {
-            let (project, _) = match authorize() {
-                Ok((project, key)) => (project, key),
+            let auth = match authorize() {
+                Ok(auth) => auth,
                 Err(err) => {
                     println!("{}", err);
                     return;
                 }
             };
 
-            let path = match context.args.first() {
-                Some(path) => path.to_string(),
+            let cwd_relative_path = match context.args.first() {
+                Some(path) => path.to_string().replace('\\', "/"),
                 None => {
                     println!("No path provided");
                     return;
                 }
             };
 
+            let project_relative_path: String = PathBuf::from(&auth.folder.unwrap_or_default())
+                .join(&cwd_relative_path)
+                .to_str()
+                .unwrap()
+                .into();
             match delete(secrets::dsl::secrets)
-                .filter(secrets::project.eq(project))
-                .filter(secrets::path.eq(&path))
+                .filter(secrets::project.eq(&auth.project))
+                .filter(secrets::path.eq(&project_relative_path))
                 .execute(&mut create_connection())
             {
                 Ok(deleted) => {
                     if deleted == 0 {
                         println!("No secret found stored with this path");
                     } else {
-                        println!("Secret removed: {}", path);
+                        println!("Secret removed: {}", project_relative_path);
                     }
                 }
                 Err(err) => {
