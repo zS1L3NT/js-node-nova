@@ -1,3 +1,5 @@
+use regex::Regex;
+
 use {
 	clipboard::{ClipboardProvider, ClipboardContext},
     seahorse::Command,
@@ -133,6 +135,54 @@ fn read_cargo_toml(folder: &Path) -> Option<()> {
     Some(())
 }
 
+fn read_build_gradle(folder: &Path) -> Option<()> {
+	let mut output = String::new();
+
+    let text = fs::read_to_string(folder.join("build.gradle")).ok()?;
+
+	let mut reading_dependencies = false;
+	for line in text.split('\n') {
+		let line = line.trim();
+
+		if reading_dependencies {
+			if line.trim() == "}" {
+				break;
+			}
+
+			let regex = Regex::new(r#"^\w+ (?:['"](.+):(.+):(.+)['"]|\w+\(['"](.+):(.+):(.+)['"]\))$"#).unwrap();
+			if regex.is_match(line) {
+				let captures = regex.captures(line).unwrap();
+				let group = captures.get(1).unwrap_or_else(|| captures.get(4).unwrap()).as_str();
+				let dependency = captures.get(2).unwrap_or_else(|| captures.get(5).unwrap()).as_str();
+				let version = captures.get(3).unwrap_or_else(|| captures.get(6).unwrap()).as_str();
+
+				output.push_str(&format!("        -   [![{}:{}](https://img.shields.io/badge/{}-{}-brightgreen?style=flat-square)](https://mvnrepository.com/artifact/{}/{}/{})\n",
+				group,
+				dependency,
+				using_clean_url(format!("{}:{}", group, dependency)),
+				using_clean_url(version),
+				group,
+				dependency,
+				version,
+			));
+			} else if line.is_empty() || line.starts_with("//") {
+				continue;
+			} else {
+				println!("Failed to parse dependency: {}", line);
+			}
+		} else if line == "dependencies {" {
+			reading_dependencies = true;
+			continue;
+		}
+	}
+
+	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    ctx.set_contents(output[..output.len() - 1].into()).unwrap();
+	ctx.get_contents().unwrap();
+    println!("Copied build.gradle data to clipboard");
+    Some(())
+}
+
 pub fn generate() -> Command {
     Command::new("generate")
         .description("Generate the `Built with` section for my README.md files")
@@ -153,7 +203,11 @@ pub fn generate() -> Command {
                         return;
                     }
 
-                    println!("No package.json, pubspec.yaml or cargo.toml found");
+					if read_build_gradle(&path).is_some() {
+						return;
+					}
+
+                    println!("No package.json, pubspec.yaml, cargo.toml or build.gradle found");
                 }
                 None => {
                     println!("No path provided");
