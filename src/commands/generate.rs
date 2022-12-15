@@ -1,12 +1,12 @@
 use regex::Regex;
 
 use {
-	clipboard::{ClipboardProvider, ClipboardContext},
+    clipboard::{ClipboardContext, ClipboardProvider},
     seahorse::Command,
     std::{
         collections::HashMap,
         fs,
-        path::{Path, PathBuf},
+        path::PathBuf,
     },
 };
 
@@ -19,12 +19,12 @@ where
         .replace('_', "__")
 }
 
-fn read_package_json(folder: &Path) -> Option<()> {
+fn read_package_json(text: String) -> Option<()> {
     let mut output = String::new();
 
-    let text = fs::read_to_string(folder.join("package.json")).ok()?;
     let json = serde_json::from_str::<serde_json::Value>(&text).ok()?;
 
+    let empty_object = serde_json::Value::Object(serde_json::map::Map::new());
     let dependencies = json
         .as_object()?
         .get("dependencies")?
@@ -32,7 +32,8 @@ fn read_package_json(folder: &Path) -> Option<()> {
         .iter()
         .chain(
             json.as_object()?
-                .get("devDependencies")?
+                .get("devDependencies")
+                .unwrap_or(&empty_object)
                 .as_object()?
                 .iter(),
         )
@@ -55,17 +56,16 @@ fn read_package_json(folder: &Path) -> Option<()> {
 		));
     }
 
-	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
-	ctx.get_contents().unwrap();
+    ctx.get_contents().unwrap();
     println!("Copied package.json data to clipboard");
     Some(())
 }
 
-fn read_pubspec_yaml(folder: &Path) -> Option<()> {
+fn read_pubspec_yaml(text: String) -> Option<()> {
     let mut output = String::new();
 
-    let text = fs::read_to_string(folder.join("pubspec.yaml")).ok()?;
     let yaml = serde_yaml::from_str::<serde_yaml::Value>(&text).ok()?;
 
     let dependencies = yaml
@@ -99,16 +99,15 @@ fn read_pubspec_yaml(folder: &Path) -> Option<()> {
 		));
     }
 
-	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
-	ctx.get_contents().unwrap();
+    ctx.get_contents().unwrap();
     Some(())
 }
 
-fn read_cargo_toml(folder: &Path) -> Option<()> {
+fn read_cargo_toml(text: String) -> Option<()> {
     let mut output = String::new();
 
-    let text = fs::read_to_string(folder.join("Cargo.toml")).ok()?;
     let cargo = text.parse::<toml::Value>().ok()?;
 
     let dependencies = cargo.get("dependencies")?.as_table()?;
@@ -128,35 +127,44 @@ fn read_cargo_toml(folder: &Path) -> Option<()> {
 		));
     }
 
-	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
-	ctx.get_contents().unwrap();
+    ctx.get_contents().unwrap();
     println!("Copied Cargo.toml data to clipboard");
     Some(())
 }
 
-fn read_build_gradle(folder: &Path) -> Option<()> {
-	let mut output = String::new();
+fn read_build_gradle(text: String) -> Option<()> {
+    let mut output = String::new();
 
-    let text = fs::read_to_string(folder.join("build.gradle")).ok()?;
+    let mut reading_dependencies = false;
+    for line in text.split('\n') {
+        let line = line.trim();
 
-	let mut reading_dependencies = false;
-	for line in text.split('\n') {
-		let line = line.trim();
+        if reading_dependencies {
+            if line.trim() == "}" {
+                break;
+            }
 
-		if reading_dependencies {
-			if line.trim() == "}" {
-				break;
-			}
+            let regex =
+                Regex::new(r#"^\w+ (?:['"](.+):(.+):(.+)['"]|\w+\(['"](.+):(.+):(.+)['"]\))$"#)
+                    .unwrap();
+            if regex.is_match(line) {
+                let captures = regex.captures(line).unwrap();
+                let group = captures
+                    .get(1)
+                    .unwrap_or_else(|| captures.get(4).unwrap())
+                    .as_str();
+                let dependency = captures
+                    .get(2)
+                    .unwrap_or_else(|| captures.get(5).unwrap())
+                    .as_str();
+                let version = captures
+                    .get(3)
+                    .unwrap_or_else(|| captures.get(6).unwrap())
+                    .as_str();
 
-			let regex = Regex::new(r#"^\w+ (?:['"](.+):(.+):(.+)['"]|\w+\(['"](.+):(.+):(.+)['"]\))$"#).unwrap();
-			if regex.is_match(line) {
-				let captures = regex.captures(line).unwrap();
-				let group = captures.get(1).unwrap_or_else(|| captures.get(4).unwrap()).as_str();
-				let dependency = captures.get(2).unwrap_or_else(|| captures.get(5).unwrap()).as_str();
-				let version = captures.get(3).unwrap_or_else(|| captures.get(6).unwrap()).as_str();
-
-				output.push_str(&format!("        -   [![{}:{}](https://img.shields.io/badge/{}-{}-brightgreen?style=flat-square)](https://mvnrepository.com/artifact/{}/{}/{})\n",
+                output.push_str(&format!("        -   [![{}:{}](https://img.shields.io/badge/{}-{}-brightgreen?style=flat-square)](https://mvnrepository.com/artifact/{}/{}/{})\n",
 				group,
 				dependency,
 				using_clean_url(format!("{}:{}", group, dependency)),
@@ -165,20 +173,20 @@ fn read_build_gradle(folder: &Path) -> Option<()> {
 				dependency,
 				version,
 			));
-			} else if line.is_empty() || line.starts_with("//") {
-				continue;
-			} else {
-				println!("Failed to parse dependency: {}", line);
-			}
-		} else if line == "dependencies {" {
-			reading_dependencies = true;
-			continue;
-		}
-	}
+            } else if line.is_empty() || line.starts_with("//") {
+                continue;
+            } else {
+                println!("Failed to parse dependency: {}", line);
+            }
+        } else if line == "dependencies {" {
+            reading_dependencies = true;
+            continue;
+        }
+    }
 
-	let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
-	ctx.get_contents().unwrap();
+    ctx.get_contents().unwrap();
     println!("Copied build.gradle data to clipboard");
     Some(())
 }
@@ -190,24 +198,54 @@ pub fn generate() -> Command {
             match context.args.first() {
                 Some(path) => {
                     let path = PathBuf::from(path);
+                    let file = fs::read_to_string(&path);
 
-                    if read_package_json(&path).is_some() {
-                        return;
+                    if let Ok(file) = file {
+                        match path.file_name() {
+                            Some(filename) => match filename.to_str().unwrap() {
+                                "package.json" => {
+                                    if read_package_json(file).is_none() {
+                                        println!(
+                                            "Error occurred while parsing package.json: {:?}",
+                                            path
+                                        );
+                                    }
+                                }
+                                "pubspec.yaml" => {
+                                    if read_pubspec_yaml(file).is_none() {
+                                        println!(
+                                            "Error occurred while parsing pubspec.yaml: {:?}",
+                                            path
+                                        );
+                                    }
+                                }
+                                "Cargo.toml" => {
+                                    if read_cargo_toml(file).is_none() {
+                                        println!(
+                                            "Error occurred while parsing Cargo.toml: {:?}",
+                                            path
+                                        );
+                                    }
+                                }
+                                "build.gradle" => {
+                                    if read_build_gradle(file).is_none() {
+                                        println!(
+                                            "Error occurred while parsing build.gradle: {:?}",
+                                            path
+                                        );
+                                    }
+                                }
+                                _ => {
+                                    println!("Cannot parse file");
+                                }
+                            },
+                            None => {
+                                println!("Cannot parse folder")
+                            }
+                        }
+                    } else {
+                        println!("Invalid file path provided");
                     }
-
-                    if read_pubspec_yaml(&path).is_some() {
-                        return;
-                    }
-
-                    if read_cargo_toml(&path).is_some() {
-                        return;
-                    }
-
-					if read_build_gradle(&path).is_some() {
-						return;
-					}
-
-                    println!("No package.json, pubspec.yaml, cargo.toml or build.gradle found");
                 }
                 None => {
                     println!("No path provided");
