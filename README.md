@@ -61,5 +61,5 @@ Do note that the script needs the environment variables from [.env.example](.env
         -   [![clipboard-win](https://img.shields.io/badge/clipboard--win-4.4.2-yellow?style=flat-square)](https://crates.io/crates/clipboard-win/4.4.2)
         -   [![dialoguer](https://img.shields.io/badge/dialoguer-0.10.2-yellow?style=flat-square)](https://crates.io/crates/dialoguer/0.10.2)
         -   [![regex](https://img.shields.io/badge/regex-1.6.0-yellow?style=flat-square)](https://crates.io/crates/regex/1.6.0)
-        -   [![prettytable-rs](https://img.shields.io/badge/prettytable--rs-%5E0.9-yellow?style=flat-square)](https://crates.io/crates/prettytable-rs/^0.9)
+        -   [![prettytable-rs](https://img.shields.io/badge/prettytable--rs-%5E0.9-yellow?style=flat-square)](https://crates.io/crates/prettytable-rs/0.9)
         -   [![seahorse](https://img.shields.io/badge/seahorse-2.1-yellow?style=flat-square)](https://crates.io/crates/seahorse/2.1)
