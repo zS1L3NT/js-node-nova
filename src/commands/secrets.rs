@@ -129,6 +129,49 @@ fn clone() -> Command {
         })
 }
 
+fn check() -> Command {
+    Command::new("check")
+        .description("Check if the secrets are still the same as that in the database")
+        .action(|_| {
+            let auth = match authorize() {
+                Ok(auth) => auth,
+                Err(err) => {
+                    println!("{}", err);
+                    return;
+                }
+            };
+
+            let secrets = match secrets::dsl::secrets
+                .filter(secrets::project.eq(&auth.project))
+                .get_results::<Secret>(&mut create_connection())
+            {
+                Ok(secret) => secret,
+                Err(_) => {
+                    println!("No secrets found for this project");
+                    return;
+                }
+            };
+
+            for secret in secrets {
+                let absolute_path = PathBuf::from(option_env!("PROJECTS_DIR").unwrap())
+                    .join(&secret.project)
+                    .join(&secret.path);
+                match fs::read_to_string(&absolute_path) {
+                    Ok(content) => {
+                        if content == decrypt(&secret.content, &auth.key).unwrap() {
+                            println!("Identical secret: {}", &secret.path);
+                        } else {
+                            println!("Non-identical secret: {}", &secret.path);
+						}
+                    }
+                    Err(_) => {
+                        println!("Non-existent secret: {}", &secret.path);
+                    }
+                }
+            }
+        })
+}
+
 fn set() -> Command {
     Command::new("set")
         .description("Set a repository secret, update if it already exists")
@@ -215,7 +258,7 @@ fn remove() -> Command {
             };
 
             let project_relative_path: String = PathBuf::from(&auth.folder.unwrap_or_default())
-                .join(&cwd_relative_path)
+                .join(cwd_relative_path)
                 .to_str()
                 .unwrap()
                 .into();
@@ -244,6 +287,7 @@ pub fn secrets() -> Command {
         .description("Manage secrets for different repositories")
         .command(list())
         .command(clone())
+        .command(check())
         .command(set())
         .command(remove())
         .action(|context| context.help())

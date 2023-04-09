@@ -52,7 +52,7 @@ fn read_package_json(text: String) -> Option<()> {
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
-			version.replace('^', "").replace('~', "")
+			version.replace(['^', '~'], "")
 		));
     }
 
@@ -95,7 +95,7 @@ fn read_pubspec_yaml(text: String) -> Option<()> {
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
-			version.replace('^', "").replace('~', ""),
+			version.replace(['^', '~'], ""),
 		));
     }
 
@@ -123,7 +123,7 @@ fn read_cargo_toml(text: String) -> Option<()> {
 			using_clean_url(dependency),
 			using_clean_url(version),
 			dependency,
-			version.replace('^', "").replace('~', ""),
+			version.replace(['^', '~'], ""),
 		));
     }
 
