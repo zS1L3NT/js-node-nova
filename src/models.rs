@@ -1,4 +1,4 @@
-use {crate::schema::secrets, diesel::prelude::*};
+use diesel::prelude::*;
 
 #[derive(Queryable)]
 pub struct Config {
@@ -8,7 +8,7 @@ pub struct Config {
 }
 
 #[derive(AsChangeset, Insertable, Queryable)]
-#[diesel(table_name = secrets)]
+#[diesel(table_name = super::schema::secrets)]
 pub struct Secret {
     pub project: String,
     pub path: String,

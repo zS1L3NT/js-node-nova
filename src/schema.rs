@@ -16,7 +16,4 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(
-    configs,
-    secrets,
-);
+diesel::allow_tables_to_appear_in_same_query!(configs, secrets,);

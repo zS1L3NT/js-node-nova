@@ -1,14 +1,4 @@
-use regex::Regex;
-
-use {
-    clipboard::{ClipboardContext, ClipboardProvider},
-    seahorse::Command,
-    std::{
-        collections::HashMap,
-        fs,
-        path::PathBuf,
-    },
-};
+use clipboard::{ClipboardContext, ClipboardProvider};
 
 fn using_clean_url<T>(text: T) -> String
 where
@@ -38,7 +28,7 @@ fn read_package_json(text: String) -> Option<()> {
                 .iter(),
         )
         .map(|(k, v)| (k.as_str(), v.as_str().unwrap()))
-        .collect::<HashMap<_, _>>();
+        .collect::<std::collections::HashMap<_, _>>();
 
     let mut dependency_names = dependencies.keys().collect::<Vec<_>>();
     dependency_names.sort();
@@ -81,7 +71,7 @@ fn read_pubspec_yaml(text: String) -> Option<()> {
         )
         .filter(|(_, v)| v.is_string())
         .map(|(k, v)| (k.as_str().unwrap(), v.as_str().unwrap()))
-        .collect::<HashMap<_, _>>();
+        .collect::<std::collections::HashMap<_, _>>();
 
     let mut dependency_names = dependencies.keys().collect::<Vec<_>>();
     dependency_names.sort();
@@ -146,9 +136,10 @@ fn read_build_gradle(text: String) -> Option<()> {
                 break;
             }
 
-            let regex =
-                Regex::new(r#"^\w+ (?:['"](.+):(.+):(.+)['"]|\w+\(['"](.+):(.+):(.+)['"]\))$"#)
-                    .unwrap();
+            let regex = regex::Regex::new(
+                r#"^\w+ (?:['"](.+):(.+):(.+)['"]|\w+\(['"](.+):(.+):(.+)['"]\))$"#,
+            )
+            .unwrap();
             if regex.is_match(line) {
                 let captures = regex.captures(line).unwrap();
                 let group = captures
@@ -191,14 +182,14 @@ fn read_build_gradle(text: String) -> Option<()> {
     Some(())
 }
 
-pub fn generate() -> Command {
-    Command::new("generate")
+pub fn generate() -> seahorse::Command {
+    seahorse::Command::new("generate")
         .description("Generate the `Built with` section for my README.md files")
         .action(|context| {
             match context.args.first() {
                 Some(path) => {
-                    let path = PathBuf::from(path);
-                    let file = fs::read_to_string(&path);
+                    let path = std::path::PathBuf::from(path);
+                    let file = std::fs::read_to_string(&path);
 
                     if let Ok(file) = file {
                         match path.file_name() {

@@ -1,19 +1,16 @@
 use {
-    super::super::{create_connection, models::Config, schema::configs},
+    crate::{models::Config, schema::configs},
     diesel::prelude::*,
-    prettytable::Table,
-    seahorse::Command,
-    std::{fs, path::PathBuf},
 };
 
-fn clone() -> Command {
-    Command::new("clone")
+fn clone() -> seahorse::Command {
+    seahorse::Command::new("clone")
         .description("Clone project configuration file(s) to the current working directory")
         .action(|context| {
             for shorthand in &context.args {
                 let config = match configs::dsl::configs
                     .filter(configs::shorthand.eq(shorthand))
-                    .first::<Config>(&mut create_connection())
+                    .first::<Config>(&mut crate::create_connection())
                 {
                     Ok(config) => config,
                     Err(_) => {
@@ -22,7 +19,7 @@ fn clone() -> Command {
                     }
                 };
 
-                match fs::write(PathBuf::from(&config.filename), config.content) {
+                match std::fs::write(std::path::PathBuf::from(&config.filename), config.content) {
                     Ok(_) => println!("Wrote to file: {}", config.filename),
                     Err(err) => {
                         println!("Unable to write file: {}", config.filename);
@@ -33,27 +30,27 @@ fn clone() -> Command {
         })
 }
 
-fn list() -> Command {
-    Command::new("list")
+fn list() -> seahorse::Command {
+    seahorse::Command::new("list")
         .description("List all project configuration file(s) and their shorthands")
         .action(|_| {
             let configs = configs::dsl::configs
-                .load::<Config>(&mut create_connection())
+                .load::<Config>(&mut crate::create_connection())
                 .unwrap();
 
-            let mut table = Table::new();
-			table.set_titles(prettytable::row!["Shorthand", "Filename"]);
+            let mut table = prettytable::Table::new();
+            table.set_titles(prettytable::row!["Shorthand", "Filename"]);
 
             for config in configs {
-				table.add_row(prettytable::row![config.shorthand, config.filename]);
+                table.add_row(prettytable::row![config.shorthand, config.filename]);
             }
 
-			table.printstd();
+            table.printstd();
         })
 }
 
-pub fn config() -> Command {
-    Command::new("config")
+pub fn config() -> seahorse::Command {
+    seahorse::Command::new("config")
         .description("Manage reusable project configuration files")
         .command(clone())
         .command(list())
