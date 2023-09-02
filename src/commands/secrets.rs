@@ -7,7 +7,6 @@ use {
         models::Secret,
         schema::secrets,
     },
-    dialoguer::{theme::ColorfulTheme, Password},
     diesel::{delete, insert_into, prelude::*},
     prettytable::Table,
     regex::Regex,
@@ -41,10 +40,7 @@ fn authorize() -> Result<AuthData, String> {
         }
     };
 
-    let key = Password::with_theme(&ColorfulTheme::default())
-        .with_prompt("Enter password: ")
-        .interact()
-        .unwrap();
+    let key = rpassword::prompt_password("Enter passord: ").unwrap();
 
     if !validate(&key) {
         Err("Incorrect key".into())
@@ -162,7 +158,7 @@ fn check() -> Command {
                             println!("Identical secret: {}", &secret.path);
                         } else {
                             println!("Non-identical secret: {}", &secret.path);
-						}
+                        }
                     }
                     Err(_) => {
                         println!("Non-existent secret: {}", &secret.path);
