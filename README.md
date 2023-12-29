@@ -11,19 +11,26 @@ I have had many TypeScript projects, and copying the config files into new proje
 ## Features
 
 -   Writing to config files
-    -   `nova config clone [one or more file commands]`
+    -   `nova configs clone [...shorthands]`
         -   `ts` - Adds my tsconfig.json file
         -   `git` - Adds my .gitignore file
         -   `pkg` - Adds my generic package.json file
         -   `ecf` - Adds my .editorconfig file
         -   and many more...
 -   Listing all config files
-    -   `nova config list`
+    -   `nova configs list`
+-	Editing a configuration
+	-	`nova configs vim [filename]`
+-	Adding a new configuration
+	-	`nova configs add [filename] [shorthand]`
+-	Removing a configuration
+	-	`nova configs remove [filename]`
 -   Generating a list of dependencies for my README.md files
     -   `nova generate`
         -   NodeJS Projects
         -   DenoJS Projects
         -   Dart Projects
+		-	Rust Projects
 -   Listing all project secret files
     -   `nova secrets list`
 -   Cloning a project secret file
@@ -61,5 +68,5 @@ Do note that the script needs the environment variables from [.env.example](.env
         -   [![clipboard-win](https://img.shields.io/badge/clipboard--win-4.4.2-yellow?style=flat-square)](https://crates.io/crates/clipboard-win/4.4.2)
         -   [![dialoguer](https://img.shields.io/badge/dialoguer-0.10.2-yellow?style=flat-square)](https://crates.io/crates/dialoguer/0.10.2)
         -   [![regex](https://img.shields.io/badge/regex-1.6.0-yellow?style=flat-square)](https://crates.io/crates/regex/1.6.0)
-        -   [![prettytable-rs](https://img.shields.io/badge/prettytable--rs-%5E0.9-yellow?style=flat-square)](https://crates.io/crates/prettytable-rs/0.9)
+        -   [![prettytable-rs](https://img.shields.io/badge/prettytable--rs-%5E0.10-yellow?style=flat-square)](https://crates.io/crates/prettytable-rs/0.10)
         -   [![seahorse](https://img.shields.io/badge/seahorse-2.1-yellow?style=flat-square)](https://crates.io/crates/seahorse/2.1)
