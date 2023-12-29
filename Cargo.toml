@@ -10,7 +10,7 @@ aes-gcm = "0.10.1"
 base64 = "0.13.0"
 clipboard = "0.5.0"
 diesel = { version = "2.0.0", features = ["postgres"] }
-prettytable-rs = "^0.9"
+prettytable-rs = "^0.10"
 regex = "1.6.0"
 rpassword = "7.2.0"
 seahorse = "2.1"
