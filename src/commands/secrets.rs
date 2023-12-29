@@ -47,6 +47,7 @@ fn authorize() -> Result<AuthData, String> {
 fn list() -> seahorse::Command {
     seahorse::Command::new("list")
         .description("List all secret filenames for a repository without showing the data")
+        .usage("nova secrets list")
         .action(|_| {
             let auth = match authorize() {
                 Ok(auth) => auth,
@@ -86,6 +87,7 @@ fn list() -> seahorse::Command {
 fn clone() -> seahorse::Command {
     seahorse::Command::new("clone")
         .description("Clone the repository secrets to their original locations")
+        .usage("nova secrets clone")
         .action(|_| {
             let auth = match authorize() {
                 Ok(auth) => auth,
@@ -127,6 +129,7 @@ fn clone() -> seahorse::Command {
 fn check() -> seahorse::Command {
     seahorse::Command::new("check")
         .description("Check if the secrets are still the same as that in the database")
+        .usage("nova secrets check")
         .action(|_| {
             let auth = match authorize() {
                 Ok(auth) => auth,
@@ -170,6 +173,7 @@ fn check() -> seahorse::Command {
 fn set() -> seahorse::Command {
     seahorse::Command::new("set")
         .description("Set a repository secret, update if it already exists")
+        .usage("nova secrets set [path/to/config]")
         .action(|context| {
             let auth = match authorize() {
                 Ok(auth) => auth,
@@ -235,6 +239,7 @@ fn set() -> seahorse::Command {
 fn remove() -> seahorse::Command {
     seahorse::Command::new("remove")
         .description("Remove a repository secret")
+        .usage("nova secrts remove [path/to/config]")
         .action(|context| {
             let auth = match authorize() {
                 Ok(auth) => auth,

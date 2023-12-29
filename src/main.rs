@@ -17,7 +17,7 @@ fn main() {
 
     let app = seahorse::App::new("nova")
         .description("A CLI for helping me with various tasks")
-        .command(commands::config())
+        .command(commands::configs())
         .command(commands::generate())
         .command(commands::secrets())
         .action(|config| config.help());

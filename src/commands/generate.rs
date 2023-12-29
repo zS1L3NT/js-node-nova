@@ -185,6 +185,7 @@ fn read_build_gradle(text: String) -> Option<()> {
 pub fn generate() -> seahorse::Command {
     seahorse::Command::new("generate")
         .description("Generate the `Built with` section for my README.md files")
+        .usage("nova generate [path/to/file]")
         .action(|context| {
             match context.args.first() {
                 Some(path) => {

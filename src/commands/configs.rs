@@ -6,7 +6,7 @@ use {
 fn list() -> seahorse::Command {
     seahorse::Command::new("list")
         .description("List all project configuration file(s) and their shorthands")
-        .usage("nova config list")
+        .usage("nova configs list")
         .action(|_| {
             let configs = configs::dsl::configs
                 .load::<Config>(&mut crate::create_connection())
@@ -30,7 +30,7 @@ fn list() -> seahorse::Command {
 fn clone() -> seahorse::Command {
     seahorse::Command::new("clone")
         .description("Clone project configuration file(s) to the current working directory")
-        .usage("nova config clone [...shorthands]")
+        .usage("nova configs clone [...shorthands]")
         .action(|context| {
             for shorthand in &context.args {
                 let config = match configs::dsl::configs
@@ -58,7 +58,7 @@ fn clone() -> seahorse::Command {
 fn vim() -> seahorse::Command {
     seahorse::Command::new("vim")
         .description("View a project configuration file in Vim")
-        .usage("nova config vim [filename]")
+        .usage("nova configs vim [filename]")
         .action(|context| {
             let filename = match context.args.first() {
                 Some(filename) => filename,
@@ -147,7 +147,7 @@ fn vim() -> seahorse::Command {
 fn add() -> seahorse::Command {
     seahorse::Command::new("add")
         .description("Add a new configuration file, uses file content if the file exists")
-        .usage("nova config add [filename] [shorthand]")
+        .usage("nova configs add [filename] [shorthand]")
         .action(|context| {
             let filename = match context.args.first() {
                 Some(filename) => filename,
@@ -233,7 +233,7 @@ fn add() -> seahorse::Command {
 fn remove() -> seahorse::Command {
     seahorse::Command::new("remove")
         .description("Remove a configuration file")
-        .usage("nova config remove [filename]")
+        .usage("nova configs remove [filename]")
         .action(|context| {
             let filename = match context.args.first() {
                 Some(filename) => filename,
@@ -262,8 +262,8 @@ fn remove() -> seahorse::Command {
         })
 }
 
-pub fn config() -> seahorse::Command {
-    seahorse::Command::new("config")
+pub fn configs() -> seahorse::Command {
+    seahorse::Command::new("configs")
         .description("Manage reusable project configuration files")
         .command(list())
         .command(clone())
