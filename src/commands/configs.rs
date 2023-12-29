@@ -58,10 +58,10 @@ fn clone() -> seahorse::Command {
 fn vim() -> seahorse::Command {
     seahorse::Command::new("vim")
         .description("View a project configuration file in Vim")
-        .usage("nova configs vim [filename]")
+        .usage("nova configs vim [shorthand]")
         .action(|context| {
-            let filename = match context.args.first() {
-                Some(filename) => filename,
+            let shorthand = match context.args.first() {
+                Some(shorthand) => shorthand,
                 None => {
                     println!("Please provide a filename");
                     return;
@@ -69,12 +69,12 @@ fn vim() -> seahorse::Command {
             };
 
             let config = match configs::dsl::configs
-                .filter(configs::filename.eq(filename))
+                .filter(configs::shorthand.eq(shorthand))
                 .first::<Config>(&mut crate::create_connection())
             {
                 Ok(config) => config,
                 Err(_) => {
-                    println!("Unknown config filename: {}", filename);
+                    println!("Unknown config shorthand: {}", shorthand);
                     return;
                 }
             };
@@ -128,7 +128,7 @@ fn vim() -> seahorse::Command {
             }
 
             match diesel::update(configs::dsl::configs)
-                .filter(configs::filename.eq(&filename))
+                .filter(configs::filename.eq(&shorthand))
                 .set(configs::content.eq(&content))
                 .execute(&mut crate::create_connection())
             {
@@ -147,20 +147,20 @@ fn vim() -> seahorse::Command {
 fn add() -> seahorse::Command {
     seahorse::Command::new("add")
         .description("Add a new configuration file, uses file content if the file exists")
-        .usage("nova configs add [filename] [shorthand]")
+        .usage("nova configs add [shorthand] [filename]")
         .action(|context| {
-            let filename = match context.args.first() {
-                Some(filename) => filename,
+            let shorthand = match context.args.first() {
+                Some(shorthand) => shorthand,
                 None => {
-                    println!("Please provide a filename, then a shorthand");
+                    println!("Please provide a shorthand, then a filename");
                     return;
                 }
             };
 
-            let shorthand = match context.args.get(1) {
-                Some(shorthand) => shorthand,
+            let filename = match context.args.get(1) {
+                Some(filename) => filename,
                 None => {
-                    println!("Please provide a shorthand");
+                    println!("Please provide a filename");
                     return;
                 }
             };
@@ -170,24 +170,6 @@ fn add() -> seahorse::Command {
                 Err(_) => {
                     println!("Could not read file data: {filename}");
                     String::new()
-                }
-            };
-
-            match configs::dsl::configs
-                .filter(configs::filename.eq(filename))
-                .count()
-                .get_result::<i64>(&mut crate::create_connection())
-            {
-                Ok(configs) => {
-                    if configs != 0 {
-                        println!("Filename already exists");
-                        return;
-                    }
-                }
-                Err(err) => {
-                    println!("Unable to fetch configs");
-                    println!("Error: {}", err);
-                    return;
                 }
             };
 
@@ -209,6 +191,24 @@ fn add() -> seahorse::Command {
                 }
             };
 
+            match configs::dsl::configs
+                .filter(configs::filename.eq(filename))
+                .count()
+                .get_result::<i64>(&mut crate::create_connection())
+            {
+                Ok(configs) => {
+                    if configs != 0 {
+                        println!("Filename already exists");
+                        return;
+                    }
+                }
+                Err(err) => {
+                    println!("Unable to fetch configs");
+                    println!("Error: {}", err);
+                    return;
+                }
+            };
+
             let config = Config {
                 filename: filename.to_string(),
                 shorthand: shorthand.to_string(),
@@ -220,10 +220,10 @@ fn add() -> seahorse::Command {
                 .execute(&mut crate::create_connection())
             {
                 Ok(_) => {
-                    println!("Config created: {filename} ({shorthand})")
+                    println!("Config created: {shorthand} ({filename})")
                 }
                 Err(err) => {
-                    println!("Unable to store new config: {filename} ({shorthand})");
+                    println!("Unable to store new config: {shorthand} ({filename})");
                     println!("Error: {err}");
                 }
             }
@@ -233,25 +233,25 @@ fn add() -> seahorse::Command {
 fn remove() -> seahorse::Command {
     seahorse::Command::new("remove")
         .description("Remove a configuration file")
-        .usage("nova configs remove [filename]")
+        .usage("nova configs remove [shorthand]")
         .action(|context| {
-            let filename = match context.args.first() {
-                Some(filename) => filename,
+            let shorthand = match context.args.first() {
+                Some(shorthand) => shorthand,
                 None => {
-                    println!("Please provide a filename");
+                    println!("Please provide a shorthand");
                     return;
                 }
             };
 
             match diesel::delete(configs::dsl::configs)
-                .filter(configs::filename.eq(&filename))
+                .filter(configs::shorthand.eq(&shorthand))
                 .execute(&mut crate::create_connection())
             {
                 Ok(deleted) => {
                     if deleted == 0 {
-                        println!("Unknown config filename: {filename}");
+                        println!("Unknown config shorthand: {shorthand}");
                     } else {
-                        println!("Config removed: {filename}");
+                        println!("Config removed: {shorthand}");
                     }
                 }
                 Err(err) => {

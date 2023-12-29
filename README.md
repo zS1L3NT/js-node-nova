@@ -20,11 +20,11 @@ I have had many TypeScript projects, and copying the config files into new proje
 -   Listing all config files
     -   `nova configs list`
 -	Editing a configuration
-	-	`nova configs vim [filename]`
+	-	`nova configs vim [shorthand]`
 -	Adding a new configuration
-	-	`nova configs add [filename] [shorthand]`
+	-	`nova configs add [shorthand] [filename]`
 -	Removing a configuration
-	-	`nova configs remove [filename]`
+	-	`nova configs remove [shorthand]`
 -   Generating a list of dependencies for my README.md files
     -   `nova generate`
         -   NodeJS Projects
@@ -36,9 +36,9 @@ I have had many TypeScript projects, and copying the config files into new proje
 -   Cloning a project secret file
     -   `nova secrets clone`
 -   Setting a project secret file
-    -   `nova secrets set [file path]`
+    -   `nova secrets set [path/to/file]`
 -   Removing a project secret file
-    -   `nova secrets remove [file path]`
+    -   `nova secrets remove [path/to/file]`
 
 ## Usage
 
