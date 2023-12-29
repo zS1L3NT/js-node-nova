@@ -34,7 +34,7 @@ fn authorize() -> Result<AuthData, String> {
         }
     };
 
-    let key = rpassword::prompt_password("Enter passord: ").unwrap();
+    let key = rpassword::prompt_password("Enter password: ").unwrap();
 
     if !crate::aes::validate(&key) {
         Err("Incorrect key".into())
