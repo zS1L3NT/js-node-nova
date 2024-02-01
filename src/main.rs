@@ -20,6 +20,7 @@ fn main() {
         .command(commands::configs())
         .command(commands::generate())
         .command(commands::secrets())
+        .command(commands::setup())
         .action(|config| config.help());
 
     app.run(std::env::args().collect::<Vec<String>>());
