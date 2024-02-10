@@ -3,19 +3,12 @@ use {
     diesel::prelude::*,
 };
 
-struct AuthData {
+struct Location {
     project: String,
     folder: Option<String>,
-    key: String,
 }
 
-fn authorize() -> Result<AuthData, String> {
-    let mut response = AuthData {
-        project: String::new(),
-        folder: None,
-        key: String::new(),
-    };
-
+fn locate() -> Result<Location, String> {
     match regex::Regex::new(r#"Projects/([^/]*)/?(.+)?"#)
         .unwrap()
         .captures(
@@ -26,21 +19,14 @@ fn authorize() -> Result<AuthData, String> {
                 .replace('\\', "/"),
         ) {
         Some(captures) => {
-            response.project = captures.get(1).unwrap().as_str().into();
-            response.folder = captures.get(2).map(|m| m.as_str().to_string());
+            return Ok(Location {
+                project: captures.get(1).unwrap().as_str().into(),
+                folder: captures.get(2).map(|m| m.as_str().to_string()),
+            });
         }
         None => {
             return Err("Invalid project path".into());
         }
-    };
-
-    let key = rpassword::prompt_password("Enter password: ").unwrap();
-
-    if !crate::aes::validate(&key) {
-        Err("Incorrect key".into())
-    } else {
-        response.key = key;
-        Ok(response)
     }
 }
 
@@ -49,8 +35,8 @@ fn list() -> seahorse::Command {
         .description("List all secret filenames for a repository without showing the data")
         .usage("nova secrets list")
         .action(|_| {
-            let auth = match authorize() {
-                Ok(auth) => auth,
+            let location = match locate() {
+                Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -58,8 +44,8 @@ fn list() -> seahorse::Command {
             };
 
             let secrets = match secrets::dsl::secrets
-                .filter(secrets::project.eq(&auth.project))
-                .get_results::<Secret>(&mut crate::create_connection())
+                .filter(secrets::project.eq(&location.project))
+                .get_results::<Secret>(&mut crate::connect_db())
             {
                 Ok(secret) => secret,
                 Err(_) => {
@@ -72,12 +58,7 @@ fn list() -> seahorse::Command {
             table.set_titles(prettytable::row!["Path", "Content Length"]);
 
             for secret in secrets {
-                table.add_row(prettytable::row![
-                    secret.path,
-                    crate::aes::decrypt(&secret.content, &auth.key)
-                        .unwrap()
-                        .len()
-                ]);
+                table.add_row(prettytable::row![secret.path, secret.content.len()]);
             }
 
             table.printstd();
@@ -89,8 +70,8 @@ fn clone() -> seahorse::Command {
         .description("Clone the repository secrets to their original locations")
         .usage("nova secrets clone")
         .action(|_| {
-            let auth = match authorize() {
-                Ok(auth) => auth,
+            let location = match locate() {
+                Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -98,8 +79,8 @@ fn clone() -> seahorse::Command {
             };
 
             let secrets = match secrets::dsl::secrets
-                .filter(secrets::project.eq(&auth.project))
-                .get_results::<Secret>(&mut crate::create_connection())
+                .filter(secrets::project.eq(&location.project))
+                .get_results::<Secret>(&mut crate::connect_db())
             {
                 Ok(secret) => secret,
                 Err(_) => {
@@ -109,13 +90,10 @@ fn clone() -> seahorse::Command {
             };
 
             for secret in secrets {
-                let absolute_path = std::path::PathBuf::from(option_env!("PROJECTS_DIR").unwrap())
+                let absolute_path = std::path::PathBuf::from("/Users/mac/Projects")
                     .join(&secret.project)
                     .join(&secret.path);
-                match std::fs::write(
-                    &absolute_path,
-                    crate::aes::decrypt(&secret.content, &auth.key).unwrap(),
-                ) {
+                match std::fs::write(&absolute_path, &secret.content) {
                     Ok(_) => println!("Wrote to file: {}", &secret.path),
                     Err(err) => {
                         println!("Unable to write file: {}", &secret.path);
@@ -131,8 +109,8 @@ fn check() -> seahorse::Command {
         .description("Check if the secrets are still the same as that in the database")
         .usage("nova secrets check")
         .action(|_| {
-            let auth = match authorize() {
-                Ok(auth) => auth,
+            let location = match locate() {
+                Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -140,8 +118,8 @@ fn check() -> seahorse::Command {
             };
 
             let secrets = match secrets::dsl::secrets
-                .filter(secrets::project.eq(&auth.project))
-                .get_results::<Secret>(&mut crate::create_connection())
+                .filter(secrets::project.eq(&location.project))
+                .get_results::<Secret>(&mut crate::connect_db())
             {
                 Ok(secret) => secret,
                 Err(_) => {
@@ -151,12 +129,12 @@ fn check() -> seahorse::Command {
             };
 
             for secret in secrets {
-                let absolute_path = std::path::PathBuf::from(option_env!("PROJECTS_DIR").unwrap())
+                let absolute_path = std::path::PathBuf::from("/Users/mac/Projects")
                     .join(&secret.project)
                     .join(&secret.path);
                 match std::fs::read_to_string(&absolute_path) {
                     Ok(content) => {
-                        if content == crate::aes::decrypt(&secret.content, &auth.key).unwrap() {
+                        if content == secret.content {
                             println!("Identical secret: {}", &secret.path);
                         } else {
                             println!("Non-identical secret: {}", &secret.path);
@@ -175,8 +153,8 @@ fn set() -> seahorse::Command {
         .description("Set a repository secret, update if it already exists")
         .usage("nova secrets set [path/to/config]")
         .action(|context| {
-            let auth = match authorize() {
-                Ok(auth) => auth,
+            let location = match locate() {
+                Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -200,28 +178,28 @@ fn set() -> seahorse::Command {
             };
 
             let secret = Secret {
-                project: auth.project,
-                path: std::path::PathBuf::from(&auth.folder.unwrap_or_default())
+                project: location.project,
+                path: std::path::PathBuf::from(&location.folder.unwrap_or_default())
                     .join(&cwd_relative_path)
                     .to_str()
                     .unwrap()
                     .into(),
-                content: crate::aes::encrypt(&content, &auth.key).unwrap(),
+                content: content,
             };
 
             let upsert = match secrets::dsl::secrets
                 .filter(secrets::project.eq(&secret.project))
                 .filter(secrets::path.eq(&secret.path))
-                .first::<Secret>(&mut crate::create_connection())
+                .first::<Secret>(&mut crate::connect_db())
             {
                 Ok(_) => diesel::update(secrets::dsl::secrets)
                     .filter(secrets::project.eq(&secret.project))
                     .filter(secrets::path.eq(&secret.path))
                     .set(secrets::content.eq(&secret.content))
-                    .execute(&mut crate::create_connection()),
+                    .execute(&mut crate::connect_db()),
                 Err(_) => diesel::insert_into(secrets::dsl::secrets)
                     .values(&secret)
-                    .execute(&mut crate::create_connection()),
+                    .execute(&mut crate::connect_db()),
             };
 
             match upsert {
@@ -241,8 +219,8 @@ fn remove() -> seahorse::Command {
         .description("Remove a repository secret")
         .usage("nova secrts remove [path/to/config]")
         .action(|context| {
-            let auth = match authorize() {
-                Ok(auth) => auth,
+            let location = match locate() {
+                Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
                     return;
@@ -258,15 +236,15 @@ fn remove() -> seahorse::Command {
             };
 
             let project_relative_path: String =
-                std::path::PathBuf::from(&auth.folder.unwrap_or_default())
+                std::path::PathBuf::from(&location.folder.unwrap_or_default())
                     .join(cwd_relative_path)
                     .to_str()
                     .unwrap()
                     .into();
             match diesel::delete(secrets::dsl::secrets)
-                .filter(secrets::project.eq(&auth.project))
+                .filter(secrets::project.eq(&location.project))
                 .filter(secrets::path.eq(&project_relative_path))
-                .execute(&mut crate::create_connection())
+                .execute(&mut crate::connect_db())
             {
                 Ok(deleted) => {
                     if deleted == 0 {

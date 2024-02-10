@@ -9,7 +9,7 @@ fn list() -> seahorse::Command {
         .usage("nova configs list")
         .action(|_| {
             let configs = configs::dsl::configs
-                .load::<Config>(&mut crate::create_connection())
+                .load::<Config>(&mut crate::connect_db())
                 .unwrap();
 
             let mut table = prettytable::Table::new();
@@ -35,7 +35,7 @@ fn clone() -> seahorse::Command {
             for shorthand in &context.args {
                 let config = match configs::dsl::configs
                     .filter(configs::shorthand.eq(shorthand))
-                    .first::<Config>(&mut crate::create_connection())
+                    .first::<Config>(&mut crate::connect_db())
                 {
                     Ok(config) => config,
                     Err(_) => {
@@ -70,7 +70,7 @@ fn vim() -> seahorse::Command {
 
             let config = match configs::dsl::configs
                 .filter(configs::shorthand.eq(shorthand))
-                .first::<Config>(&mut crate::create_connection())
+                .first::<Config>(&mut crate::connect_db())
             {
                 Ok(config) => config,
                 Err(_) => {
@@ -130,7 +130,7 @@ fn vim() -> seahorse::Command {
             match diesel::update(configs::dsl::configs)
                 .filter(configs::filename.eq(&shorthand))
                 .set(configs::content.eq(&content))
-                .execute(&mut crate::create_connection())
+                .execute(&mut crate::connect_db())
             {
                 Ok(_) => {
                     println!("Updated config: {}", &config.filename);
@@ -176,7 +176,7 @@ fn add() -> seahorse::Command {
             match configs::dsl::configs
                 .filter(configs::shorthand.eq(shorthand))
                 .count()
-                .get_result::<i64>(&mut crate::create_connection())
+                .get_result::<i64>(&mut crate::connect_db())
             {
                 Ok(configs) => {
                     if configs != 0 {
@@ -194,7 +194,7 @@ fn add() -> seahorse::Command {
             match configs::dsl::configs
                 .filter(configs::filename.eq(filename))
                 .count()
-                .get_result::<i64>(&mut crate::create_connection())
+                .get_result::<i64>(&mut crate::connect_db())
             {
                 Ok(configs) => {
                     if configs != 0 {
@@ -217,7 +217,7 @@ fn add() -> seahorse::Command {
 
             match diesel::insert_into(configs::dsl::configs)
                 .values(&config)
-                .execute(&mut crate::create_connection())
+                .execute(&mut crate::connect_db())
             {
                 Ok(_) => {
                     println!("Config created: {shorthand} ({filename})")
@@ -245,7 +245,7 @@ fn remove() -> seahorse::Command {
 
             match diesel::delete(configs::dsl::configs)
                 .filter(configs::shorthand.eq(&shorthand))
-                .execute(&mut crate::create_connection())
+                .execute(&mut crate::connect_db())
             {
                 Ok(deleted) => {
                     if deleted == 0 {

@@ -2,16 +2,16 @@
 
 diesel::table! {
     configs (filename) {
-        filename -> Varchar,
-        shorthand -> Varchar,
+        filename -> Text,
+        shorthand -> Text,
         content -> Text,
     }
 }
 
 diesel::table! {
     secrets (project, path) {
-        project -> Varchar,
-        path -> Varchar,
+        project -> Text,
+        path -> Text,
         content -> Text,
     }
 }
