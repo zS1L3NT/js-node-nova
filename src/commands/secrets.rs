@@ -8,12 +8,7 @@ struct Location {
     folder: Option<String>,
 }
 
-fn authorize() -> Result<Location, String> {
-    let mut location = Location {
-        project: String::new(),
-        folder: None,
-    };
-
+fn locate() -> Result<Location, String> {
     match regex::Regex::new(r#"Projects/([^/]*)/?(.+)?"#)
         .unwrap()
         .captures(
@@ -24,17 +19,14 @@ fn authorize() -> Result<Location, String> {
                 .replace('\\', "/"),
         ) {
         Some(captures) => {
-            location.project = captures.get(1).unwrap().as_str().into();
-            location.folder = captures.get(2).map(|m| m.as_str().to_string());
+            return Ok(Location {
+                project: captures.get(1).unwrap().as_str().into(),
+                folder: captures.get(2).map(|m| m.as_str().to_string()),
+            });
         }
         None => {
             return Err("Invalid project path".into());
         }
-    };
-
-    match sudo::escalate_if_needed() {
-        Ok(_) => Ok(location),
-        Err(_) => Err("Sudo permission required to access secrets".into()),
     }
 }
 
@@ -43,7 +35,7 @@ fn list() -> seahorse::Command {
         .description("List all secret filenames for a repository without showing the data")
         .usage("nova secrets list")
         .action(|_| {
-            let location = match authorize() {
+            let location = match locate() {
                 Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
@@ -78,7 +70,7 @@ fn clone() -> seahorse::Command {
         .description("Clone the repository secrets to their original locations")
         .usage("nova secrets clone")
         .action(|_| {
-            let location = match authorize() {
+            let location = match locate() {
                 Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
@@ -117,7 +109,7 @@ fn check() -> seahorse::Command {
         .description("Check if the secrets are still the same as that in the database")
         .usage("nova secrets check")
         .action(|_| {
-            let location = match authorize() {
+            let location = match locate() {
                 Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
@@ -161,7 +153,7 @@ fn set() -> seahorse::Command {
         .description("Set a repository secret, update if it already exists")
         .usage("nova secrets set [path/to/config]")
         .action(|context| {
-            let location = match authorize() {
+            let location = match locate() {
                 Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
@@ -227,7 +219,7 @@ fn remove() -> seahorse::Command {
         .description("Remove a repository secret")
         .usage("nova secrts remove [path/to/config]")
         .action(|context| {
-            let location = match authorize() {
+            let location = match locate() {
                 Ok(location) => location,
                 Err(err) => {
                     println!("{}", err);
