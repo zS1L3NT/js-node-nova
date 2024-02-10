@@ -178,7 +178,8 @@ pub fn setup() -> seahorse::Command {
                 &path,
                 json::parse(&std::fs::read_to_string(&path).unwrap())
                     .unwrap()
-                    .pretty(4),
+                    .pretty(4)
+                    .replace("    ", "\t"),
             )
             .unwrap();
         })
