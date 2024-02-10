@@ -1,8 +1,3 @@
-use {
-    crate::{models::Secret, schema::secrets},
-    diesel::prelude::*,
-};
-
 struct AuthData {
     project: String,
     folder: Option<String>,
