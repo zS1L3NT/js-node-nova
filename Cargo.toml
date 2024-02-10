@@ -3,13 +3,16 @@ name = "rs-cli-nova"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["prisma-cli"]
+resolver = "2"
+
 [dependencies]
 base64 = "0.21.7"
 clipboard = "0.5.0"
 json = "0.12.4"
 prettytable-rs = "0.10.0"
 prisma-client-rust = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11" }
-prisma-client-rust-cli = { git = "https://github.com/Brendonovich/prisma-client-rust", tag = "0.6.11" }
 regex = "1.10.3"
 rpassword = "7.3.1"
 seahorse = "2.2.0"
