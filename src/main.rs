@@ -3,8 +3,8 @@ mod models;
 mod schema;
 
 pub fn connect_db() -> diesel::SqliteConnection {
-    <diesel::SqliteConnection as diesel::Connection>::establish("file:~/nova.db")
-        .unwrap_or_else(|_| panic!("Error connecting to ~/nova.db"))
+    <diesel::SqliteConnection as diesel::Connection>::establish("file:/Users/mac/nova.db")
+        .unwrap_or_else(|_| panic!("Error connecting to /Users/mac/nova.db"))
 }
 
 fn main() {

@@ -54,7 +54,7 @@ fn list() -> seahorse::Command {
 
             let secrets = match secrets::dsl::secrets
                 .filter(secrets::project.eq(&auth.project))
-                .get_results::<Secret>(&mut crate::create_connection())
+                .get_results::<Secret>(&mut crate::connect_db())
             {
                 Ok(secret) => secret,
                 Err(_) => {
@@ -94,7 +94,7 @@ fn clone() -> seahorse::Command {
 
             let secrets = match secrets::dsl::secrets
                 .filter(secrets::project.eq(&auth.project))
-                .get_results::<Secret>(&mut crate::create_connection())
+                .get_results::<Secret>(&mut crate::connect_db())
             {
                 Ok(secret) => secret,
                 Err(_) => {
@@ -136,7 +136,7 @@ fn check() -> seahorse::Command {
 
             let secrets = match secrets::dsl::secrets
                 .filter(secrets::project.eq(&auth.project))
-                .get_results::<Secret>(&mut crate::create_connection())
+                .get_results::<Secret>(&mut crate::connect_db())
             {
                 Ok(secret) => secret,
                 Err(_) => {
@@ -207,16 +207,16 @@ fn set() -> seahorse::Command {
             let upsert = match secrets::dsl::secrets
                 .filter(secrets::project.eq(&secret.project))
                 .filter(secrets::path.eq(&secret.path))
-                .first::<Secret>(&mut crate::create_connection())
+                .first::<Secret>(&mut crate::connect_db())
             {
                 Ok(_) => diesel::update(secrets::dsl::secrets)
                     .filter(secrets::project.eq(&secret.project))
                     .filter(secrets::path.eq(&secret.path))
                     .set(secrets::content.eq(&secret.content))
-                    .execute(&mut crate::create_connection()),
+                    .execute(&mut crate::connect_db()),
                 Err(_) => diesel::insert_into(secrets::dsl::secrets)
                     .values(&secret)
-                    .execute(&mut crate::create_connection()),
+                    .execute(&mut crate::connect_db()),
             };
 
             match upsert {
@@ -261,7 +261,7 @@ fn remove() -> seahorse::Command {
             match diesel::delete(secrets::dsl::secrets)
                 .filter(secrets::project.eq(&auth.project))
                 .filter(secrets::path.eq(&project_relative_path))
-                .execute(&mut crate::create_connection())
+                .execute(&mut crate::connect_db())
             {
                 Ok(deleted) => {
                     if deleted == 0 {
