@@ -1,9 +1,10 @@
 mod commands;
-#[allow(warnings, unused)]
-mod prisma;
+mod models;
+mod schema;
 
-pub async fn connect_db() -> prisma::PrismaClient {
-    prisma::PrismaClient::_builder().build().await.unwrap()
+pub fn connect_db() -> diesel::SqliteConnection {
+    <diesel::SqliteConnection as diesel::Connection>::establish("file:~/nova.db")
+        .unwrap_or_else(|_| panic!("Error connecting to ~/nova.db"))
 }
 
 fn main() {
