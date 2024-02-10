@@ -4,4 +4,3 @@
 **/.env
 **/*.test.ts
 **/.vscode
-src/prisma.rs
