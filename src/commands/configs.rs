@@ -79,7 +79,7 @@ fn vim() -> seahorse::Command {
                 }
             };
 
-            let path = std::path::PathBuf::from(format!("{}.temp", &config.filename));
+            let path = std::path::PathBuf::from(format!("/Users/mac/{}.temp", &config.filename));
             if let Err(err) = std::fs::write(&path, &config.content) {
                 println!("Unable to temp file: {}", config.filename);
                 println!("Error: {}", err);
@@ -128,7 +128,7 @@ fn vim() -> seahorse::Command {
             }
 
             match diesel::update(configs::dsl::configs)
-                .filter(configs::filename.eq(&shorthand))
+                .filter(configs::shorthand.eq(&shorthand))
                 .set(configs::content.eq(&content))
                 .execute(&mut crate::connect_db())
             {
