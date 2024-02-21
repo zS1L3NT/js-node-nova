@@ -44,13 +44,24 @@ fn clone() -> seahorse::Command {
                     }
                 };
 
-                match std::fs::write(std::path::PathBuf::from(&config.filename), config.content) {
-                    Ok(_) => println!("Wrote to file: {}", config.filename),
-                    Err(err) => {
-                        println!("Unable to write file: {}", config.filename);
-                        println!("Error: {}", err);
-                    }
+                if let Err(err) =
+                    std::fs::write(std::path::PathBuf::from(&config.filename), config.content)
+                {
+                    println!("Unable to write file: {}", config.filename);
+                    println!("Error: {}", err);
+                    return;
                 }
+
+                if let Err(_) = std::os::unix::fs::chown(
+                    std::path::PathBuf::from(&config.filename),
+                    Some(501),
+                    Some(20),
+                ) {
+                    println!("Unable to change file owner: {}", config.filename);
+                    return;
+                }
+
+                println!("Wrote to file: {}", config.filename);
             }
         })
 }

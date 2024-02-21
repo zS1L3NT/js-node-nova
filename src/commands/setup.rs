@@ -174,13 +174,22 @@ pub fn setup() -> seahorse::Command {
                 }
             }
 
-            std::fs::write(
+            if let Err(_) = std::fs::write(
                 &path,
                 json::parse(&std::fs::read_to_string(&path).unwrap())
                     .unwrap()
                     .pretty(4)
                     .replace("    ", "\t"),
-            )
-            .unwrap();
+            ) {
+                println!("Failed to write to package.json");
+                return;
+            }
+
+            if let Err(_) = std::os::unix::fs::chown(&path, Some(501), Some(20)) {
+                println!("Unable to change file owner: {}", path.to_str().unwrap());
+                return;
+            }
+
+            println!("Modified package.json");
         })
 }
