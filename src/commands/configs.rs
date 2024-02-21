@@ -99,13 +99,13 @@ fn vim() -> seahorse::Command {
                 return;
             }
 
-            let mut child = match std::process::Command::new("/usr/bin/vim")
+            let mut child = match std::process::Command::new("/opt/homebrew/bin/nvim")
                 .arg(&path.to_str().unwrap())
                 .spawn()
             {
                 Ok(child) => child,
                 Err(err) => {
-                    error!("Unable to run vim editor"; err);
+                    error!("Unable to run nvim"; err);
                     return;
                 }
             };
@@ -113,7 +113,7 @@ fn vim() -> seahorse::Command {
             match child.wait() {
                 Ok(_) => {}
                 Err(err) => {
-                    error!("Editor returned a non-zero status"; err);
+                    error!("Nvim returned a non-zero status"; err);
                     return;
                 }
             }
