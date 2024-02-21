@@ -1,9 +1,10 @@
 mod commands;
 mod models;
+mod output;
 mod schema;
 
 pub fn connect_db() -> diesel::SqliteConnection {
-    if let Err(_) = sudo::escalate_if_needed() {
+    if sudo::escalate_if_needed().is_err() {
         panic!("Sudo permission required to access secrets");
     }
 

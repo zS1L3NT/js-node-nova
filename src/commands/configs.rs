@@ -1,5 +1,5 @@
 use {
-    crate::{models::Config, schema::configs},
+    crate::{error, models::Config, schema::configs, success, warn},
     diesel::prelude::*,
 };
 
@@ -39,7 +39,7 @@ fn clone() -> seahorse::Command {
                 {
                     Ok(config) => config,
                     Err(_) => {
-                        println!("Unknown config shorthand: {}", shorthand);
+                        error!("Unknown config shorthand", shorthand);
                         continue;
                     }
                 };
@@ -47,21 +47,24 @@ fn clone() -> seahorse::Command {
                 if let Err(err) =
                     std::fs::write(std::path::PathBuf::from(&config.filename), config.content)
                 {
-                    println!("Unable to write file: {}", config.filename);
-                    println!("Error: {}", err);
+                    error!("Unable to write to file", config.filename; err);
                     return;
                 }
 
-                if let Err(_) = std::os::unix::fs::chown(
+                if let Err(err) = std::os::unix::fs::chown(
                     std::path::PathBuf::from(&config.filename),
                     Some(501),
                     Some(20),
                 ) {
-                    println!("Unable to change file owner: {}", config.filename);
+                    error!("Unable to change file owner", config.filename; err);
                     return;
                 }
 
-                println!("Wrote to file: {}", config.filename);
+                success!("Cloned file", config.filename);
+            }
+
+            if context.args.is_empty() {
+                error!("Please provide some shorthands to clone");
             }
         })
 }
@@ -74,7 +77,7 @@ fn vim() -> seahorse::Command {
             let shorthand = match context.args.first() {
                 Some(shorthand) => shorthand,
                 None => {
-                    println!("Please provide a filename");
+                    error!("Please provide a filename to edit");
                     return;
                 }
             };
@@ -85,15 +88,14 @@ fn vim() -> seahorse::Command {
             {
                 Ok(config) => config,
                 Err(_) => {
-                    println!("Unknown config shorthand: {}", shorthand);
+                    error!("Unknown config shorthand", shorthand);
                     return;
                 }
             };
 
             let path = std::path::PathBuf::from(format!("/Users/mac/{}.temp", &config.filename));
             if let Err(err) = std::fs::write(&path, &config.content) {
-                println!("Unable to temp file: {}", config.filename);
-                println!("Error: {}", err);
+                error!("Unable to write to temp file", config.filename; err);
                 return;
             }
 
@@ -103,8 +105,7 @@ fn vim() -> seahorse::Command {
             {
                 Ok(child) => child,
                 Err(err) => {
-                    println!("Failed to run editor");
-                    println!("Error: {}", err);
+                    error!("Unable to run vim editor"; err);
                     return;
                 }
             };
@@ -112,8 +113,7 @@ fn vim() -> seahorse::Command {
             match child.wait() {
                 Ok(_) => {}
                 Err(err) => {
-                    println!("Editor returned a non-zero status");
-                    println!("Error: {}", err);
+                    error!("Editor returned a non-zero status"; err);
                     return;
                 }
             }
@@ -121,20 +121,18 @@ fn vim() -> seahorse::Command {
             let content = match std::fs::read_to_string(&path) {
                 Ok(content) => content,
                 Err(err) => {
-                    println!("Unable to read temp file: {}", config.filename);
-                    println!("Error: {}", err);
+                    error!("Unable to read from temp file", config.filename; err);
                     return;
                 }
             };
 
             if let Err(err) = std::fs::remove_file(path) {
-                println!("Unable to remove temp file: {}", config.filename);
-                println!("Error: {}", err);
+                error!("Unable to remove temp file", config.filename; err);
                 return;
             }
 
             if &content == &config.content {
-                println!("No changes made to file: {}", config.filename);
+                error!("No changes made to file", config.filename);
                 return;
             }
 
@@ -144,12 +142,10 @@ fn vim() -> seahorse::Command {
                 .execute(&mut crate::connect_db())
             {
                 Ok(_) => {
-                    println!("Updated config: {}", &config.filename);
+                    success!("Updated config", &config.filename);
                 }
                 Err(err) => {
-                    println!("Unable to update config: {}", &config.filename);
-                    println!("Error: {}", err);
-                    return;
+                    error!("Unable to update config", &config.filename; err);
                 }
             }
         })
@@ -163,7 +159,7 @@ fn add() -> seahorse::Command {
             let shorthand = match context.args.first() {
                 Some(shorthand) => shorthand,
                 None => {
-                    println!("Please provide a shorthand, then a filename");
+                    error!("Please provide a shorthand, then a filename");
                     return;
                 }
             };
@@ -171,7 +167,7 @@ fn add() -> seahorse::Command {
             let filename = match context.args.get(1) {
                 Some(filename) => filename,
                 None => {
-                    println!("Please provide a filename");
+                    error!("Please provide a filename");
                     return;
                 }
             };
@@ -179,7 +175,7 @@ fn add() -> seahorse::Command {
             let content = match std::fs::read_to_string(std::path::PathBuf::from(&filename)) {
                 Ok(content) => content,
                 Err(_) => {
-                    println!("Could not read file data: {filename}");
+                    warn!("Could not read file data", filename);
                     String::new()
                 }
             };
@@ -191,13 +187,12 @@ fn add() -> seahorse::Command {
             {
                 Ok(configs) => {
                     if configs != 0 {
-                        println!("Shorthand already exists");
+                        error!("Shorthand already exists");
                         return;
                     }
                 }
                 Err(err) => {
-                    println!("Unable to fetch configs");
-                    println!("Error: {}", err);
+                    error!("Unable to fetch configs"; err);
                     return;
                 }
             };
@@ -209,13 +204,12 @@ fn add() -> seahorse::Command {
             {
                 Ok(configs) => {
                     if configs != 0 {
-                        println!("Filename already exists");
+                        error!("Filename already exists");
                         return;
                     }
                 }
                 Err(err) => {
-                    println!("Unable to fetch configs");
-                    println!("Error: {}", err);
+                    error!("Unable to fetch configs"; err);
                     return;
                 }
             };
@@ -231,11 +225,12 @@ fn add() -> seahorse::Command {
                 .execute(&mut crate::connect_db())
             {
                 Ok(_) => {
-                    println!("Config created: {shorthand} ({filename})")
+                    success!(format!(
+                        "Added config \"{shorthand}\" which expands to \"{filename}\""
+                    ))
                 }
                 Err(err) => {
-                    println!("Unable to store new config: {shorthand} ({filename})");
-                    println!("Error: {err}");
+                    error!("Unable to store new config", shorthand; err);
                 }
             }
         })
@@ -249,7 +244,7 @@ fn remove() -> seahorse::Command {
             let shorthand = match context.args.first() {
                 Some(shorthand) => shorthand,
                 None => {
-                    println!("Please provide a shorthand");
+                    error!("Please provide a shorthand");
                     return;
                 }
             };
@@ -260,14 +255,13 @@ fn remove() -> seahorse::Command {
             {
                 Ok(deleted) => {
                     if deleted == 0 {
-                        println!("Unknown config shorthand: {shorthand}");
+                        error!("Unknown config shorthand", shorthand);
                     } else {
-                        println!("Config removed: {shorthand}");
+                        success!("Removed config", shorthand);
                     }
                 }
                 Err(err) => {
-                    println!("Unable to delete config");
-                    println!("Error: {}", err);
+                    error!("Unable to delete config", shorthand; err);
                 }
             };
         })

@@ -1,3 +1,5 @@
+use crate::{error, success, warn};
+
 static AUTHOR: &'static str = "zS1L3NT <dev@zectan.com> (https://www.zectan.com)";
 static LICENSE: &'static str = "GPL-3.0";
 static SCRIPT_LINT: &'static str =
@@ -27,12 +29,12 @@ pub fn setup() -> seahorse::Command {
                     "yarn" => "yarn",
                     "npm" => "npm",
                     _ => {
-                        println!("Invalid npm cli provided");
+                        error!("Unknown npm cli provided", string);
                         return;
                     }
                 },
                 None => {
-                    println!("No npm cli provided");
+                    error!("Please provide an npm cli");
                     return;
                 }
             };
@@ -40,13 +42,13 @@ pub fn setup() -> seahorse::Command {
             let path = match context.args.get(1) {
                 Some(path) => match std::path::PathBuf::from(path).canonicalize() {
                     Ok(path) => path,
-                    Err(_) => {
-                        println!("Invalid package.json path provided");
+                    Err(err) => {
+                        error!("Unable to parse package.json path"; err);
                         return;
                     }
                 },
                 None => {
-                    println!("No package.json path provided");
+                    error!("Please provide a package.json path");
                     return;
                 }
             };
@@ -54,13 +56,13 @@ pub fn setup() -> seahorse::Command {
             let old = match std::fs::read_to_string(&path) {
                 Ok(file) => match json::parse(&file) {
                     Ok(json) => json,
-                    Err(_) => {
-                        println!("Could not parse JSON from package.json");
+                    Err(err) => {
+                        error!("Unable to parse package.json"; err);
                         return;
                     }
                 },
-                Err(_) => {
-                    println!("Invalid package.json path provided");
+                Err(err) => {
+                    error!("Unable to read from package.json"; err);
                     return;
                 }
             };
@@ -97,7 +99,7 @@ pub fn setup() -> seahorse::Command {
                         new_scripts.insert("lint", SCRIPT_LINT).unwrap();
                     }
                 } else {
-                    println!("\"scripts\" property is not an object...");
+                    warn!("\"scripts\" property is not an object");
                     new_scripts.insert("lint", SCRIPT_LINT).unwrap();
                 }
             } else {
@@ -123,16 +125,14 @@ pub fn setup() -> seahorse::Command {
                             new_deps.insert(key, value.clone()).unwrap();
                         }
                     } else {
-                        println!("\"{}\" property is not an object...", dep_key);
+                        warn!(format!("\"{}\" property is not an object...", dep_key));
                     }
                 }
                 new.insert(dep_key, new_deps).unwrap();
             }
 
-            if let Ok(_) = std::fs::write(&path, format!("{}", new)) {
-                println!("Wrote to package.json");
-            } else {
-                println!("Failed to write to package.json");
+            if let Err(err) = std::fs::write(&path, format!("{}", new)) {
+                error!("Unable to write to package.json"; err);
                 return;
             }
 
@@ -161,7 +161,7 @@ pub fn setup() -> seahorse::Command {
             {
                 Ok(child) => child,
                 Err(err) => {
-                    println!("Failed to run install command: {}", err);
+                    error!("Unable to run install command"; err);
                     return;
                 }
             };
@@ -169,27 +169,27 @@ pub fn setup() -> seahorse::Command {
             match child.wait() {
                 Ok(_) => {}
                 Err(err) => {
-                    println!("Install command exited with error: {}", err);
+                    error!("Install command exited with error"; err);
                     return;
                 }
             }
 
-            if let Err(_) = std::fs::write(
+            if let Err(err) = std::fs::write(
                 &path,
                 json::parse(&std::fs::read_to_string(&path).unwrap())
                     .unwrap()
                     .pretty(4)
                     .replace("    ", "\t"),
             ) {
-                println!("Failed to write to package.json");
+                error!("Unable to write to package.json"; err);
                 return;
             }
 
-            if let Err(_) = std::os::unix::fs::chown(&path, Some(501), Some(20)) {
-                println!("Unable to change file owner: {}", path.to_str().unwrap());
+            if let Err(err) = std::os::unix::fs::chown(&path, Some(501), Some(20)) {
+                error!("Unable to change file owner", path.to_str().unwrap(); err);
                 return;
             }
 
-            println!("Modified package.json");
+            success!("Modified package.json");
         })
 }

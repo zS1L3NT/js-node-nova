@@ -1,4 +1,7 @@
-use clipboard::{ClipboardContext, ClipboardProvider};
+use {
+    crate::{error, success},
+    clipboard::{ClipboardContext, ClipboardProvider},
+};
 
 fn using_clean_url<T>(text: T) -> String
 where
@@ -49,7 +52,7 @@ fn read_package_json(text: String) -> Option<()> {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
     ctx.get_contents().unwrap();
-    println!("Copied package.json data to clipboard");
+    success!("Copied package.json data to clipboard");
     Some(())
 }
 
@@ -120,7 +123,7 @@ fn read_cargo_toml(text: String) -> Option<()> {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
     ctx.get_contents().unwrap();
-    println!("Copied Cargo.toml data to clipboard");
+    success!("Copied Cargo.toml data to clipboard");
     Some(())
 }
 
@@ -167,7 +170,7 @@ fn read_build_gradle(text: String) -> Option<()> {
             } else if line.is_empty() || line.starts_with("//") {
                 continue;
             } else {
-                println!("Failed to parse dependency: {}", line);
+                error!("Failed to parse dependency", line);
             }
         } else if line == "dependencies {" {
             reading_dependencies = true;
@@ -178,7 +181,7 @@ fn read_build_gradle(text: String) -> Option<()> {
     let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
     ctx.set_contents(output[..output.len() - 1].into()).unwrap();
     ctx.get_contents().unwrap();
-    println!("Copied build.gradle data to clipboard");
+    success!("Copied build.gradle data to clipboard");
     Some(())
 }
 
@@ -187,60 +190,50 @@ pub fn generate() -> seahorse::Command {
         .description("Generate the `Built with` section for my README.md files")
         .usage("nova generate [path/to/file]")
         .action(|context| {
-            match context.args.first() {
-                Some(path) => {
-                    let path = std::path::PathBuf::from(path);
-                    let file = std::fs::read_to_string(&path);
+            let path = match context.args.first() {
+                Some(path) => std::path::PathBuf::from(path),
+                None => {
+                    error!("Please provide a filename");
+                    return;
+                }
+            };
 
-                    if let Ok(file) = file {
-                        match path.file_name() {
-                            Some(filename) => match filename.to_str().unwrap() {
-                                "package.json" => {
-                                    if read_package_json(file).is_none() {
-                                        println!(
-                                            "Error occurred while parsing package.json: {:?}",
-                                            path
-                                        );
-                                    }
-                                }
-                                "pubspec.yaml" => {
-                                    if read_pubspec_yaml(file).is_none() {
-                                        println!(
-                                            "Error occurred while parsing pubspec.yaml: {:?}",
-                                            path
-                                        );
-                                    }
-                                }
-                                "Cargo.toml" => {
-                                    if read_cargo_toml(file).is_none() {
-                                        println!(
-                                            "Error occurred while parsing Cargo.toml: {:?}",
-                                            path
-                                        );
-                                    }
-                                }
-                                "build.gradle" => {
-                                    if read_build_gradle(file).is_none() {
-                                        println!(
-                                            "Error occurred while parsing build.gradle: {:?}",
-                                            path
-                                        );
-                                    }
-                                }
-                                _ => {
-                                    println!("Cannot parse file");
-                                }
-                            },
-                            None => {
-                                println!("Cannot parse folder")
-                            }
-                        }
-                    } else {
-                        println!("Invalid file path provided");
+            let file = match std::fs::read_to_string(&path) {
+                Ok(file) => file,
+                Err(err) => {
+                    error!("Unable to read from file", path.display(); err);
+                    return;
+                }
+            };
+
+            if path.file_name().is_none() {
+                error!("Cannot parse folder", path.display());
+                return;
+            }
+
+            match path.file_name().unwrap().to_str().unwrap() {
+                "package.json" => {
+                    if read_package_json(file).is_none() {
+                        error!("Unable to parse package.json", path.display());
                     }
                 }
-                None => {
-                    println!("No path provided");
+                "pubspec.yaml" => {
+                    if read_pubspec_yaml(file).is_none() {
+                        error!("Unable to parse pubspec.yaml", path.display());
+                    }
+                }
+                "Cargo.toml" => {
+                    if read_cargo_toml(file).is_none() {
+                        error!("Unable to parse Cargo.toml", path.display());
+                    }
+                }
+                "build.gradle" => {
+                    if read_build_gradle(file).is_none() {
+                        error!("Unable to parse build.gradle", path.display());
+                    }
+                }
+                _ => {
+                    error!("Unable to parse file", path.display());
                 }
             };
         })

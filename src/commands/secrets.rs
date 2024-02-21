@@ -1,5 +1,5 @@
 use {
-    crate::{models::Secret, schema::secrets},
+    crate::{error, models::Secret, schema::secrets, success, warn},
     diesel::prelude::*,
 };
 
@@ -8,8 +8,8 @@ struct Location {
     folder: Option<String>,
 }
 
-fn locate() -> Result<Location, String> {
-    match regex::Regex::new(r#"Projects/([^/]*)/?(.+)?"#)
+fn locate() -> Option<Location> {
+    regex::Regex::new(r#"Projects/([^/]*)/?(.+)?"#)
         .unwrap()
         .captures(
             &std::env::current_dir()
@@ -17,17 +17,11 @@ fn locate() -> Result<Location, String> {
                 .to_str()
                 .unwrap()
                 .replace('\\', "/"),
-        ) {
-        Some(captures) => {
-            return Ok(Location {
-                project: captures.get(1).unwrap().as_str().into(),
-                folder: captures.get(2).map(|m| m.as_str().to_string()),
-            });
-        }
-        None => {
-            return Err("Invalid project path".into());
-        }
-    }
+        )
+        .map(|captures| Location {
+            project: captures.get(1).unwrap().as_str().into(),
+            folder: captures.get(2).map(|m| m.as_str().to_string()),
+        })
 }
 
 fn list() -> seahorse::Command {
@@ -36,9 +30,9 @@ fn list() -> seahorse::Command {
         .usage("nova secrets list")
         .action(|_| {
             let location = match locate() {
-                Ok(location) => location,
-                Err(err) => {
-                    println!("{}", err);
+                Some(location) => location,
+                None => {
+                    error!("Invalid project path");
                     return;
                 }
             };
@@ -49,7 +43,7 @@ fn list() -> seahorse::Command {
             {
                 Ok(secret) => secret,
                 Err(_) => {
-                    println!("No secrets found for this project");
+                    warn!("No secrets found for this project");
                     return;
                 }
             };
@@ -71,9 +65,9 @@ fn clone() -> seahorse::Command {
         .usage("nova secrets clone")
         .action(|_| {
             let location = match locate() {
-                Ok(location) => location,
-                Err(err) => {
-                    println!("{}", err);
+                Some(location) => location,
+                None => {
+                    error!("Invalid project path");
                     return;
                 }
             };
@@ -84,7 +78,7 @@ fn clone() -> seahorse::Command {
             {
                 Ok(secret) => secret,
                 Err(_) => {
-                    println!("No secrets found for this project");
+                    warn!("No secrets found for this project");
                     return;
                 }
             };
@@ -94,10 +88,9 @@ fn clone() -> seahorse::Command {
                     .join(&secret.project)
                     .join(&secret.path);
                 match std::fs::write(&absolute_path, &secret.content) {
-                    Ok(_) => println!("Wrote to file: {}", &secret.path),
+                    Ok(_) => success!("Cloned secret", &secret.path),
                     Err(err) => {
-                        println!("Unable to write file: {}", &secret.path);
-                        println!("Error: {}", err);
+                        error!("Unable to write to file", &secret.path; err);
                     }
                 }
             }
@@ -110,9 +103,9 @@ fn check() -> seahorse::Command {
         .usage("nova secrets check")
         .action(|_| {
             let location = match locate() {
-                Ok(location) => location,
-                Err(err) => {
-                    println!("{}", err);
+                Some(location) => location,
+                None => {
+                    error!("Invalid project path");
                     return;
                 }
             };
@@ -123,7 +116,7 @@ fn check() -> seahorse::Command {
             {
                 Ok(secret) => secret,
                 Err(_) => {
-                    println!("No secrets found for this project");
+                    warn!("No secrets found for this project");
                     return;
                 }
             };
@@ -135,13 +128,13 @@ fn check() -> seahorse::Command {
                 match std::fs::read_to_string(&absolute_path) {
                     Ok(content) => {
                         if content == secret.content {
-                            println!("Identical secret: {}", &secret.path);
+                            println!("Identical secret \"{}\"", &secret.path);
                         } else {
-                            println!("Non-identical secret: {}", &secret.path);
+                            println!("Non-identical secret \"{}\"", &secret.path);
                         }
                     }
                     Err(_) => {
-                        println!("Non-existent secret: {}", &secret.path);
+                        println!("Non-existent secret \"{}\"", &secret.path);
                     }
                 }
             }
@@ -154,9 +147,9 @@ fn set() -> seahorse::Command {
         .usage("nova secrets set [path/to/config]")
         .action(|context| {
             let location = match locate() {
-                Ok(location) => location,
-                Err(err) => {
-                    println!("{}", err);
+                Some(location) => location,
+                None => {
+                    error!("Invalid project path");
                     return;
                 }
             };
@@ -164,15 +157,15 @@ fn set() -> seahorse::Command {
             let cwd_relative_path = match context.args.first() {
                 Some(path) => path.to_string().replace('\\', "/"),
                 None => {
-                    println!("No path provided");
+                    error!("Please provide a path to the secret file");
                     return;
                 }
             };
 
             let content = match std::fs::read_to_string(&cwd_relative_path) {
                 Ok(content) => content,
-                Err(_) => {
-                    println!("Unable to read file: {}", cwd_relative_path);
+                Err(err) => {
+                    error!("Unable to read from file", cwd_relative_path; err);
                     return;
                 }
             };
@@ -184,7 +177,7 @@ fn set() -> seahorse::Command {
                     .to_str()
                     .unwrap()
                     .into(),
-                content: content,
+                content,
             };
 
             let upsert = match secrets::dsl::secrets
@@ -204,11 +197,10 @@ fn set() -> seahorse::Command {
 
             match upsert {
                 Ok(_) => {
-                    println!("Secret stored: {}", &secret.path);
+                    success!("Stored secret", &secret.path);
                 }
                 Err(err) => {
-                    println!("Unable to store secret: {}", &secret.path);
-                    println!("Error: {}", err);
+                    error!("Unable to store secret", &secret.path; err);
                 }
             }
         })
@@ -220,9 +212,9 @@ fn remove() -> seahorse::Command {
         .usage("nova secrts remove [path/to/config]")
         .action(|context| {
             let location = match locate() {
-                Ok(location) => location,
-                Err(err) => {
-                    println!("{}", err);
+                Some(location) => location,
+                None => {
+                    error!("Invalid project path");
                     return;
                 }
             };
@@ -230,7 +222,7 @@ fn remove() -> seahorse::Command {
             let cwd_relative_path = match context.args.first() {
                 Some(path) => path.to_string().replace('\\', "/"),
                 None => {
-                    println!("No path provided");
+                    error!("Please provide a path to the secret file");
                     return;
                 }
             };
@@ -241,6 +233,7 @@ fn remove() -> seahorse::Command {
                     .to_str()
                     .unwrap()
                     .into();
+
             match diesel::delete(secrets::dsl::secrets)
                 .filter(secrets::project.eq(&location.project))
                 .filter(secrets::path.eq(&project_relative_path))
@@ -248,14 +241,13 @@ fn remove() -> seahorse::Command {
             {
                 Ok(deleted) => {
                     if deleted == 0 {
-                        println!("No secret found stored with this path");
+                        error!("No secret found", project_relative_path);
                     } else {
-                        println!("Secret removed: {}", project_relative_path);
+                        success!("Removed secret", project_relative_path);
                     }
                 }
                 Err(err) => {
-                    println!("No secret found stored with this path");
-                    println!("Error: {}", err);
+                    error!("Unable to remove secret", project_relative_path; err);
                 }
             };
         })
