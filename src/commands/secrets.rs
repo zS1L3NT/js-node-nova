@@ -87,12 +87,18 @@ fn clone() -> seahorse::Command {
                 let absolute_path = std::path::PathBuf::from("/Users/mac/Projects")
                     .join(&secret.project)
                     .join(&secret.path);
-                match std::fs::write(&absolute_path, &secret.content) {
-                    Ok(_) => success!("Cloned secret", &secret.path),
-                    Err(err) => {
-                        error!("Unable to write to file", &secret.path; err);
-                    }
+
+                if let Err(err) = std::fs::write(&absolute_path, &secret.content) {
+                    error!("Unable to write to file", &secret.path; err);
+                    return;
                 }
+
+                if let Err(err) = std::os::unix::fs::chown(&absolute_path, Some(501), Some(20)) {
+                    error!("Unable to change file owner", &secret.path; err);
+                    return;
+                }
+
+                success!("Cloned secret", &secret.path);
             }
         })
 }
