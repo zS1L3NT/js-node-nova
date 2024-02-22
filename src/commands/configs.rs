@@ -132,7 +132,7 @@ fn vim() -> seahorse::Command {
             }
 
             if &content == &config.content {
-                error!("No changes made to file", config.filename);
+                warn!("No changes made to file", config.filename);
                 return;
             }
 
