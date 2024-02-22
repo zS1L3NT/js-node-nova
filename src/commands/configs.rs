@@ -93,7 +93,7 @@ fn vim() -> seahorse::Command {
                 }
             };
 
-            let path = std::path::PathBuf::from(format!("/Users/mac/{}.temp", &config.filename));
+            let path = std::path::PathBuf::from(format!("/Users/mac/TEMP_{}", &config.filename));
             if let Err(err) = std::fs::write(&path, &config.content) {
                 error!("Unable to write to temp file", config.filename; err);
                 return;
